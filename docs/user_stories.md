@@ -16,29 +16,28 @@ User Stories
 Exceptions
 
 1. Credit Card Declined: 
-
 If a customer’s card is declined, the cart will request another form of payment, otherwise cancel the order
-2. Incorrect filter results
+2. Incorrect filter results:
 If a customer is seeing results that do not fit their filtered criteria, they will be able to report an item for review, as a seller may have incorrectly tagged their listing and/or put numerous tags to increase visibility. 
-3. Shoe listed as available, but another person purchased before they could
+3. Shoe listed as available, but another person purchased before they could: 
 If a customer is unable to purchase a shoe before another customer, the system will provide similar alternatives
-4. Old listings not removed
+4. Old listings not removed:
 If a seller does not remove a listing and a customer tries to purchase it, the system will remove it and prompt a sorry message to the customer.
-5. Listing items that are out of stock
+5. Listing items that are out of stock:
 If a customer is presented with items that are no longer in stock, a message will pop up saying “ Sorry, but that item is no longer available. Due to high demand some listings may sell quickly”.
-6. Shipping address is invalid
+6. Shipping address is invalid:
 If a customer fails to successfully fill out their shipping information, they will be prompted to reexamine that section and must complete it before moving on. 
-7. Invalid login
+7. Invalid login:
 If a customers inputs their username/password incorrectly a message will pop up saying “Incorrect username or password”
-8. Link is broken 
+8. Link is broken:
 When customer clicks on a link to a product and that product does not exist or the link is broken a message will pop up saying “Page not found.”
-9. Not enough information when creating a listing
+9. Not enough information when creating a listing:
 If a seller tries to list an incomplete listing, they will be prompted to fill out missing areas before resubmission.
-10. User Not Verified
+10. User Not Verified:
 If a user attempts to buy or sell shoes without verification, they will be prompted to create an account and enter the required information for the verification process, along with a warning about how the process will take time.
-11. User Incorrectly Verified
+11. User Incorrectly Verified:
 If a buyer or seller scams, creates fake postings, or otherwise processes a dishonest transaction, that customer’s account will be banned, with the verification information preventing them from easily creating a new burner account.
-12. User Incorrectly Banned
+12. User Incorrectly Banned:
 If a buyer or seller is unjustly banned, they can submit an appeal for their case to be reviewed by both the service and the other buyer/seller, in which case their account and services will be restored.
 
 
