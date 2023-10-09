@@ -15,7 +15,8 @@ User Stories
 
 Exceptions
 
-1. Credit Card Declined
+1. Credit Card Declined: 
+
 If a customer’s card is declined, the cart will request another form of payment, otherwise cancel the order
 2. Incorrect filter results
 If a customer is seeing results that do not fit their filtered criteria, they will be able to report an item for review, as a seller may have incorrectly tagged their listing and/or put numerous tags to increase visibility. 
