@@ -17,12 +17,12 @@ Creates a new cart for a specific customer.
 
 ```json
 {
-    	"brand”: string,
-    	“size”: int,
-    	“colors”: [ ],
-	“style”: string (this would be constrained to options like: high tops, low, mid, etc)
-	“min_price”: int,
-	“max_price”: int
+    "brand”: string,
+    “size”: int,
+    “colors”: [ ],
+    “style”: string (this would be constrained to options like: high tops, low, mid, etc)
+    “min_price”: int,
+    “max_price”: int
 }
 ```
 
