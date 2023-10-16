@@ -20,5 +20,13 @@ A shoe seller has collected various rare shoes over the years and is looking to 
 - **POST shop/create_shop is called so the seller can decide their store name.**
 - **POST listing/create_listing now that the store name is created they can upload their listing for their shoes by providing necessary information such as the name, size, brand, and meaningful tags that will be used for searching**
 
+## 3. Shoetopia client creating a show/creating a listing flow
+
+To verify the sellers and prevent the customers from getting scammed, sellers must apply for verification so that we can background check against reviews/ratings.
+
+- **POST /seller/apply-for-verification for application**
+- **GET /seller/background-check to check against reviews/ratings**
+- **POST /seller/verification-response to see if verification was successful or not**
+- **POST /seller/update-verification-status to update the status of seller's verification status**
 
 
