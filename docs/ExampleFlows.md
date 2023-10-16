@@ -16,9 +16,9 @@ The seller will receive their percentage of the sale, and Shoetopia will receive
 
 A shoe seller has collected various rare shoes over the years and is looking to list their shoes for sale on Shoetopia. They first need to make an account. From there they will create their shop before finally making their listing. 
 
-- **POST shop/create_account to create a unique username and provide necessary account information
-- **POST shop/create_shop is called so the seller can decide their store name.
-- **POST listing/create_listing now that the store name is created they can upload their listing for their shoes by providing necessary information such as the name, size, brand, and meaningful tags that will be used for searching
+- **POST shop/create_account to create a unique username and provide necessary account information**
+- **POST shop/create_shop is called so the seller can decide their store name.**
+- **POST listing/create_listing now that the store name is created they can upload their listing for their shoes by providing necessary information such as the name, size, brand, and meaningful tags that will be used for searching**
 
 
 
