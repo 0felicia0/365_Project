@@ -109,12 +109,7 @@ Handles the checkout process for a specific cart.
     "Status": string, // Status of the order ("Processing," "Shipped," "Out for Delivery," "Delivered")
     "Estimated Delivery Date": string
 }
-```
-
-## 2. Seller Purchasing
-
-The API calls are made in this sequence when setting up a shop:
-1. 
+```z
 
 ## 2. Admin
 
