@@ -117,43 +117,78 @@ The API calls are made in this sequence when setting up a shop:
 1. 
 
 ## 2. Admin
-TBD
 
-## 3. Seller Verification
+### 2.1 Background Check - `/admin/background-check/` (GET)
 
-### 3.1 /seller/apply-for-verification (POST)
+Returns the various statistics of a seller.
+
+**Request**:
+```json
+    "seller_id": int,
+```
+
+**Response**:
+```json
+    "rating": int,
+    "disputes": int,
+    "sales": int
+```
+
+### 2.2 Update Verification - `/admin/update-verification` (POST)
+
+Updates the Verified status of a particular seller.
+
 **Request**:
 ```json
 {
-    "Name": string, // Status of the order ("Processing," "Shipped," "Out for Delivery," "Delivered")
-    "Identification_documents": [string],
-    "Business_Licenses": [string]
-}
-```
-
-### 3.2 /seller/verification-response (POST)
-**Response:**
-```json
-{
-  "Success": bool,
-  "Message": string
-}
-```
-
-### 3.3 /seller/update-verification-status to update the status of seller's verification status (POST)
-**Request:**
-```json
-{
   "seller_id": int,
-  "status": string
+  "status": bool
 }
 ```
 
-**Response:**
+**Response**:
 ```json
 {
-  "Success": bool,
+  "Success": boolean
+}
+```
+
+## 3. Seller
+
+### 3.1 Apply for Verification - `/seller/post-application` (POST)
+
+Creates an application request for administrators to view.
+
+**Request**:
+```json
+{
+    "seller_id": int
+}
+```
+**Response**:
+```json
+{
+    "success": boolean
+```
+
+### 3.2 Check Verification Status - `/seller/verification-status` (GET)
+
+Checks if a seller is verified or not, and if an application is currently being processed.
+
+**Request**:
+```json
+{
+    "seller_id": int
+}
+```
+
+**Response**:
+```json
+{
+  "Verified": boolean,
   "Message": string
 }
 ```
+
+
 
