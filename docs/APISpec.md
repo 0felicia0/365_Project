@@ -189,14 +189,14 @@ Checks if a seller is verified or not, and if an application is currently being 
 ### 3.3 Upload Shoe - `/items/upload` (POST)
 This endpoint allows buyers or sellers to upload their shoes to the item database if they are not already listed.
 
-**Request **:
+**Request**:
 ```json
- {
-	“Brand”: string,
-	“Size”: int,
-	“Colors”: [],
-	“Style”: string,
-	“Quantity”: int
+{
+    “Brand”: string,
+    “Size”: int,
+    “Colors”: [],
+    “Style”: string,
+    “Quantity”: int
 }
 ```
 **Response** 
@@ -212,14 +212,14 @@ This endpoint creates a unique listing for sellers in their shop.
 **Request**:
 ```json
 {
-	“shop_id”: int,
-	“item_id”: int
+    “shop_id”: int,
+    “item_id”: int
 }
 ```
 **Response**:
 ```json
 {
-	“listing_id”: int,
+    “listing_id”: int,
 }
 ```
 
@@ -229,14 +229,14 @@ This endpoint allows first time sellers to create their shop before they may beg
 **Request**:
 ```json
 {
-	“Store_name”: string
-	“Store_owner” : string
+    “Store_name”: string
+    “Store_owner” : string
 }
 ```
 **Response**:
 ```json
 {
-	“Shop_id”: string
+    “Shop_id”: string
 }
 ```
 
@@ -246,10 +246,9 @@ This endpoint allows first time users (regardless of if they are a seller/buyer)
 **Request**:
 ```json
 {
-
-	“Name”: string
-	“Email”: string
-	“Password”: string
-	“Date of Birth (MM/DD/YYYY)”: string 		
+    “Name”: string
+    “Email”: string
+    “Password”: string
+    “Date of Birth (MM/DD/YYYY)”: string 		
 }
 ```
