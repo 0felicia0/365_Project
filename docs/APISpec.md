@@ -169,6 +169,7 @@ Creates an application request for administrators to view.
 ```json
 {
     "success": boolean
+}
 ```
 
 ### 3.2 Check Verification Status - `/seller/verification-status` (GET)
