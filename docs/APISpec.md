@@ -118,3 +118,42 @@ The API calls are made in this sequence when setting up a shop:
 
 ## 2. Admin
 TBD
+
+## 3. Seller Verification
+
+### 3.1 /seller/apply-for-verification (POST)
+**Request**:
+```json
+{
+    "Name": string, // Status of the order ("Processing," "Shipped," "Out for Delivery," "Delivered")
+    "Identification_documents": [string],
+    "Business_Licenses": [string]
+}
+```
+
+### 3.2 /seller/verification-response (POST)
+**Response:**
+```json
+{
+  "Success": bool,
+  "Message": string
+}
+```
+
+### 3.3 /seller/update-verification-status to update the status of seller's verification status (POST)
+**Request:**
+```json
+{
+  "seller_id": int,
+  "status": string
+}
+```
+
+**Response:**
+```json
+{
+  "Success": bool,
+  "Message": string
+}
+```
+
