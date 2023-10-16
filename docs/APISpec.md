@@ -188,8 +188,9 @@ Checks if a seller is verified or not, and if an application is currently being 
 
 ### 3.3 Upload Shoe - `/items/upload` (POST)
 This endpoint allows buyers or sellers to upload their shoes to the item database if they are not already listed.
-```json
+
 **Request **:
+```json
  {
 	“Brand”: string,
 	“Size”: int,
@@ -197,7 +198,9 @@ This endpoint allows buyers or sellers to upload their shoes to the item databas
 	“Style”: string,
 	“Quantity”: int
 }
+```
 **Response** 
+```json
 {
 	“Item_id”: int
 }
@@ -205,26 +208,33 @@ This endpoint allows buyers or sellers to upload their shoes to the item databas
 
 ### 3.4 Create Listing - `listing/create_listing` (POST) 
 This endpoint creates a unique listing for sellers in their shop.
-```json
+
 **Request**:
+```json
 {
 	“shop_id”: int,
 	“item_id”: int
 }
-**Response** {
+```
+**Response**:
+```json
+{
 	“listing_id”: int,
 }
 ```
 
 ### 3.5 Create Shop - `/shop/create_shop` (POST)
 This endpoint allows first time sellers to create their shop before they may begin listings. This is once they have already created an account as that is a separate endpoint. 
+
+**Request**:
 ```json
-**Request**
 {
 	“Store_name”: string
 	“Store_owner” : string
 }
-**Response**
+```
+**Response**:
+```json
 {
 	“Shop_id”: string
 }
@@ -232,9 +242,11 @@ This endpoint allows first time sellers to create their shop before they may beg
 
 ### 3.6 Create Account - `/shop/create_account` (POST):
 This endpoint allows first time users (regardless of if they are a seller/buyer) to create an account to access the website. 
+
+**Request**:
 ```json
-**Request**
 {
+
 	“Name”: string
 	“Email”: string
 	“Password”: string
