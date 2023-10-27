@@ -12,7 +12,7 @@ A potential customer comes to our shop because the new shoe that just dropped fr
 
 The seller will receive their percentage of the sale, and Shoetopia will receive a percentage of the sale. Now, the customer will wait for their new shoes.
 
-## 2. Shoetopia client creating a show/creating a listing flow
+## 2. Shoetopia client creating a shop/creating a listing flow
 
 A shoe seller has collected various rare shoes over the years and is looking to list their shoes for sale on Shoetopia. They first need to make an account. From there they will create their shop before finally making their listing. 
 
