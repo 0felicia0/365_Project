@@ -54,3 +54,60 @@ def  create_shop(account_id: int, new_shop: NewShop):
             [{"seller_id": account_id, "store_name": new_shop.store_name}]
         )
     return "OK"
+
+class Shoe(BaseModel):
+    brand: str
+    color: str
+    size: int
+    style: str
+
+class Listing(BaseModel):
+    shop_id: int
+    quantity: int
+    price:int
+
+@router.post("/create_listing")
+def create_listing(shoe: Shoe, listing: Listing):
+    #for testing purposes
+    print("in create_listing")
+    print("shoe info: ", shoe)
+    print("listing info: ", listing)
+
+    with db.engine.begin() as connection:
+        #check if shoe is in shoe catalog, if it is, return ID
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT * FROM test-shoes
+                WHERE brand = :brand, color = :color, size = :size, style = :style
+                """
+            ), [{"brand": Shoe.brand, "color": Shoe.color, "size": Shoe.size, "style": Shoe.style}]
+        )
+
+        row = result.fetchone()
+
+        if row:
+            shoe_id = row[shoe_id]
+        else: 
+            #if shoe isn't in catalog, add it, return ID
+            shoe_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    INSERT INTO test-shoes (brand, color, size, style)
+                    VALUES (:brand, :color, :size, :style)
+                    RETURN shoe_id
+                    """
+                ),
+                [{"brand": Shoe.brand, "color": Shoe.color, "size": Shoe.size, "style": Shoe.style}]
+            )
+            shoe_id = shoe_id.fetchone()[0]
+        #insert listing into table
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO test-listings (shop_id, shoe_id, quantity, price)
+                VALUES (:shop_id, :shoe_id, :quantity, :price)
+                """    
+            ),
+            [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "quantity": listing.quantity, "price": listing.price}]
+        )
