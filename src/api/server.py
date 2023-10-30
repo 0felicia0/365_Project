@@ -1,7 +1,7 @@
 from fastapi import FastAPI, exceptions
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-# from src.api import endpointFiles
+from src.api import shop
 import json
 import logging
 import sys
@@ -23,7 +23,7 @@ app = FastAPI(
 )
 
 # TODO: add routers for each endpoint
-# app.include_router(audit.router)
+app.include_router(shop.router)
 # app.include_router(carts.router)
 # app.include_router(catalog.router)
 # app.include_router(bottler.router)
