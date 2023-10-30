@@ -79,3 +79,6 @@ create table
     constraint test - shops_pkey primary key (shop_id),
     constraint test_shops_customer_id_fkey foreign key (customer_id) references accounts (customer_id)
   ) tablespace pg_default;
+
+INSERT INTO sellers (verification)
+VALUES (FALSE);
