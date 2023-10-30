@@ -27,10 +27,10 @@ def create_account(new_account: NewAccount):
                 """
                 INSERT INTO accounts
                 (name, email, password, date_of_birth)
-                VALUES(:email, :password, :date_of_birth)
+                VALUES(:name, :email, :password, :date_of_birth)
                 """
             ),
-            [{"email": new_account.email, "password": new_account.password, "date_of_birth": new_account.date_of_birth}]
+            [{"name": new_account.name, "email": new_account.email, "password": new_account.password, "date_of_birth": new_account.date_of_birth}]
         )
     return "OK"
 
@@ -78,36 +78,38 @@ def create_listing(shoe: Shoe, listing: Listing):
         result = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT * FROM test-shoes
-                WHERE brand = :brand, color = :color, size = :size, style = :style
+                SELECT * FROM test_shoes
+                WHERE brand = :brand AND color = :color AND size = :size AND style = :style
                 """
-            ), [{"brand": Shoe.brand, "color": Shoe.color, "size": Shoe.size, "style": Shoe.style}]
+            ), [{"brand": shoe.brand, "color": shoe.color, "size": shoe.size, "style": shoe.style}]
         )
 
         row = result.fetchone()
 
         if row:
-            shoe_id = row[shoe_id]
+            shoe_id = row[0]
         else: 
             #if shoe isn't in catalog, add it, return ID
             shoe_id = connection.execute(
                 sqlalchemy.text(
                     """
-                    INSERT INTO test-shoes (brand, color, size, style)
+                    INSERT INTO test_shoes (brand, color, size, style)
                     VALUES (:brand, :color, :size, :style)
-                    RETURN shoe_id
+                    RETURNING shoe_id
                     """
                 ),
-                [{"brand": Shoe.brand, "color": Shoe.color, "size": Shoe.size, "style": Shoe.style}]
+                [{"brand": shoe.brand, "color": shoe.color, "size": shoe.size, "style": shoe.style}]
             )
             shoe_id = shoe_id.fetchone()[0]
         #insert listing into table
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO test-listings (shop_id, shoe_id, quantity, price)
+                INSERT INTO test_listings (shop_id, shoe_id, quantity, price)
                 VALUES (:shop_id, :shoe_id, :quantity, :price)
                 """    
             ),
             [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "quantity": listing.quantity, "price": listing.price}]
         )
+
+        return "OK"
