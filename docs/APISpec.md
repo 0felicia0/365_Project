@@ -29,10 +29,13 @@ Creates a new cart for a specific customer.
 **Returns**:
 
 ```json
-{
-    “Sku”: string
-    “product _id”: int
-}
+[
+ {
+    “listing_id": "integer",
+    "quantity": "integer",
+    "price": "integer", 
+ }
+]
 ```
 
 ### 1.2. New Cart - `/carts/` (POST)
@@ -43,7 +46,7 @@ Creates a new cart for a specific customer.
 
 ```json
 {
-  “Name”: string,
+  “user_id”: "integer",
 }
 ```
 
@@ -51,7 +54,7 @@ Creates a new cart for a specific customer.
 
 ```json
 {
-    "cart_id": "string" /* This id will be used for future calls to add items and checkout */
+    "cart_id": "integer" /* This id will be used for future calls to add items and checkout */
 }
 ```
 
@@ -63,7 +66,9 @@ Updates the quantity of a specific item in a cart.
 
 ```json
 {
-  "quantity": "integer"
+	"listing_id": "integer",
+	"cart_id": "integer",
+	"quantity": "integer"
 }
 ```
 
@@ -83,6 +88,7 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
+  "cart_id": "integer"
   "payment": "string",
   "gold_paid": "integer"
 }
@@ -92,8 +98,6 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
-    "order_id: "integer"
-    "Tracking Number": "integer" 
     "success": "boolean"
 }
 ```
@@ -119,13 +123,11 @@ Returns the various statistics of a seller.
 
 **Request**:
 ```json
-    "seller_id": int,
+    "shop_id": int,
 ```
 
 **Response**:
 ```json
-    "rating": int,
-    "disputes": int,
     "sales": int
 ```
 
@@ -136,7 +138,7 @@ Updates the Verified status of a particular seller.
 **Request**:
 ```json
 {
-  "seller_id": int,
+  "shop_id": int,
   "status": bool
 }
 ```
@@ -157,7 +159,7 @@ Creates an application request for administrators to view.
 **Request**:
 ```json
 {
-    "seller_id": int
+    "shopr_id": int
 }
 ```
 **Response**:
@@ -174,7 +176,7 @@ Checks if a seller is verified or not, and if an application is currently being 
 **Request**:
 ```json
 {
-    "seller_id": int
+    "shop_id": int
 }
 ```
 
@@ -186,7 +188,7 @@ Checks if a seller is verified or not, and if an application is currently being 
 }
 ```
 
-### 3.3 Upload Shoe - `/items/upload` (POST)
+### 3.3 Create Listing - `/shops/upload` (POST)
 This endpoint allows buyers or sellers to upload their shoes to the item database if they are not already listed.
 
 **Request**:
@@ -194,36 +196,23 @@ This endpoint allows buyers or sellers to upload their shoes to the item databas
 {
     “Brand”: string,
     “Size”: int,
-    “Colors”: [],
+    “Color”: string,
     “Style”: string,
-    “Quantity”: int
+    “Quantity”: int,
+    "Shop_id": int,
+    "Price": int
+
 }
 ```
 **Response** 
 ```json
 {
-	“Item_id”: int
+	“Success”: boolean
 }
 ```
 
-### 3.4 Create Listing - `listing/create_listing` (POST) 
-This endpoint creates a unique listing for sellers in their shop.
 
-**Request**:
-```json
-{
-    “shop_id”: int,
-    “item_id”: int
-}
-```
-**Response**:
-```json
-{
-    “listing_id”: int,
-}
-```
-
-### 3.5 Create Shop - `/shop/create_shop` (POST)
+### 3.4 Create Shop - `/shop/create_shop` (POST)
 This endpoint allows first time sellers to create their shop before they may begin listings. This is once they have already created an account as that is a separate endpoint. 
 
 **Request**:
@@ -236,11 +225,11 @@ This endpoint allows first time sellers to create their shop before they may beg
 **Response**:
 ```json
 {
-    “Shop_id”: string
+    “Success”: boolean
 }
 ```
 
-### 3.6 Create Account - `/shop/create_account` (POST):
+### 3.5 Create Account - `/shop/create_account` (POST):
 This endpoint allows first time users (regardless of if they are a seller/buyer) to create an account to access the website. 
 
 **Request**:
@@ -249,6 +238,11 @@ This endpoint allows first time users (regardless of if they are a seller/buyer)
     “Name”: string
     “Email”: string
     “Password”: string
-    “Date of Birth (MM/DD/YYYY)”: string 		
+}
+```
+**Response**:
+```json
+{
+    “Success”: boolean
 }
 ```
