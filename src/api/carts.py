@@ -9,4 +9,3 @@ router = APIRouter(
     tags=["carts"],
     dependencies=[Depends(auth.get_api_key)],
 )
-
