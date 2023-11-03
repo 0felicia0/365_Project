@@ -9,7 +9,7 @@ POST /carts/id/checkout
 GET /buyer/track_order
 The seller will receive their percentage of the sale, and Shoetopia will receive a percentage of the sale. Now, the customer will wait for their new shoes.
 
-# Testing results for create_cart
+## Testing results for create_cart
 
 Curl: curl -X 'POST' \
   'http://127.0.0.1:8000/carts/creat_cart' \
@@ -24,7 +24,7 @@ Response: {
   "cart_id": 2
 }
 
-# Testing results for set_item_quantity
+## Testing results for set_item_quantity
 
 Curl: curl -X 'POST' \
   'http://127.0.0.1:8000/carts/add_to_cart?cart_id=2&listing_id=5&quantity=1' \
