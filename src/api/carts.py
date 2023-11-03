@@ -13,7 +13,7 @@ router = APIRouter(
 class NewCart(BaseModel):
     user_id: int
 
-@router.post("/")
+@router.post("/creat_cart")
 def create_cart(new_cart: NewCart):
 
     """ """
@@ -29,7 +29,7 @@ def create_cart(new_cart: NewCart):
     return {"cart_id": cart_id}
 
 
-@router.post("/{cart_id}/items/{item_sku}")
+@router.post("/add_to_cart")
 def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
     with db.engine.begin() as connection:
@@ -39,7 +39,7 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
                                                             """), {"listing_id": listing_id, "cart_id": cart_id, "quantity": quantity}) 
     return "OK"
 
-@router.post("/{cart_id}/checkout")
+@router.post("/checkout")
 def checkout(cart_id: int):
     # have to update ledgers, create transaction,
 
