@@ -13,7 +13,7 @@ class NewAccount(BaseModel):
     name: str
     email: str
     password: str
-    date_of_birth: str
+   
 
 @router.post("/create_account")
 def create_account(new_account: NewAccount):
@@ -25,12 +25,12 @@ def create_account(new_account: NewAccount):
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO accounts
-                (name, email, password, date_of_birth)
-                VALUES(:name, :email, :password, :date_of_birth)
+                INSERT INTO users
+                (name, email, password)
+                VALUES(:name, :email, :password)
                 """
             ),
-            [{"name": new_account.name, "email": new_account.email, "password": new_account.password, "date_of_birth": new_account.date_of_birth}]
+            [{"name": new_account.name, "email": new_account.email, "password": new_account.password}]
         )
     return "OK"
 
@@ -47,24 +47,24 @@ def  create_shop(account_id: int, new_shop: NewShop):
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO shops (seller_id, store_name)
-                VALUES(:seller_id, :store_name)
+                INSERT INTO shops (user_id, store_name)
+                VALUES(:user_id, :store_name)
                 """
             ),
-            [{"seller_id": account_id, "store_name": new_shop.store_name}]
+            [{"user_id": account_id, "store_name": new_shop.store_name}]
         )
     return "OK"
 
 class Shoe(BaseModel):
     brand: str
     color: str
-    size: int
     style: str
 
 class Listing(BaseModel):
     shop_id: int
     quantity: int
     price:int
+    size:int
 
 @router.post("/create_listing")
 def create_listing(shoe: Shoe, listing: Listing):
@@ -74,14 +74,32 @@ def create_listing(shoe: Shoe, listing: Listing):
     print("listing info: ", listing)
 
     with db.engine.begin() as connection:
+        #create a new transaction
+        
+        description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
+        
+        transaction_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO transactions (description, tag)
+                VALUES(:description, 'LISTING')
+                RETURNING id
+                """
+            ),
+            [{"description": description}])
+        transaction_id = transaction_id.first()[0]
+        
+        
+        
+        
         #check if shoe is in shoe catalog, if it is, return ID
         result = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT * FROM test_shoes
-                WHERE brand = :brand AND color = :color AND size = :size AND style = :style
+                SELECT * FROM shoes
+                WHERE brand = :brand AND color = :color AND style = :style
                 """
-            ), [{"brand": shoe.brand, "color": shoe.color, "size": shoe.size, "style": shoe.style}]
+            ), [{"brand": shoe.brand, "color": shoe.color, "style": shoe.style}]
         )
 
         row = result.fetchone()
@@ -93,23 +111,36 @@ def create_listing(shoe: Shoe, listing: Listing):
             shoe_id = connection.execute(
                 sqlalchemy.text(
                     """
-                    INSERT INTO test_shoes (brand, color, size, style)
-                    VALUES (:brand, :color, :size, :style)
+                    INSERT INTO shoes (brand, color, style, transaction_id)
+                    VALUES (:brand, :color, :style, :transaction_id)
                     RETURNING shoe_id
                     """
                 ),
-                [{"brand": shoe.brand, "color": shoe.color, "size": shoe.size, "style": shoe.style}]
+                [{"brand": shoe.brand, "color": shoe.color, "style": shoe.style, "transaction_id": transaction_id}]
             )
             shoe_id = shoe_id.fetchone()[0]
+        
         #insert listing into table
+        listing_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id)
+                VALUES (:shop_id, :shoe_id, :price, :size, :transaction_id)
+                RETURNING listing_id
+                """    
+            ),
+            [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "quantity": listing.quantity, "price": listing.price, "size": listing.size, "transaction_id": transaction_id}]
+        )
+        listing_id = listing_id.fetchone()[0]
+        #update shoe_inventory ledger
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO test_listings (shop_id, shoe_id, quantity, price)
-                VALUES (:shop_id, :shoe_id, :quantity, :price)
-                """    
+                INSERT into shoe_inventory_ledger(shop_id, listing_id, transaction_id, quantity)
+                VALUES (:shop_id, :listing_id, :transaction_id, :quantity )
+                """
             ),
-            [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "quantity": listing.quantity, "price": listing.price}]
+            [{"shop_id": listing.shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": listing.quantity}]
         )
 
         return "OK"
