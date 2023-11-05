@@ -42,8 +42,33 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
 @router.post("/checkout")
 def checkout(cart_id: int):
     # have to update ledgers, create transaction,
+    with db.engine.begin() as connection:
+        description = f"Checkout for cart_id: {cart_id}"
+        tag = "CHECKOUT"
 
-  
+        res = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description, tag)
+                                            VALUES (:description, :tag) RETURNING id"""),
+                                            {"description": description, "tag": tag})
         
-        
-    pass
+        transaction_id = res.fetchone()[0]
+
+        res = connection.execute(sqlalchemy.text("""SELECT cart_items.quantity AS quantity, cart_items.listing_id AS listing_id
+                                                  FROM cart_items WHERE cart_items.cart_id = :cart_id"""), {"cart_id": cart_id})
+        first_row = res.first()
+        quantity = first_row.quantity
+        listing_id = first_row.listing_id
+
+        res = connection.execute(sqlalchemy.text("""SELECT listings.shop_id AS shop_id, listings.price AS balance FROM listings JOIN cart_items 
+                                                 ON listings.listing_id = cart_items.listing_id
+                                                WHERE cart_items.listing_id = :listing_id"""), {"listing_id": listing_id})
+        first_row = res.first()
+        shop_id = first_row.shop_id
+        balance = first_row.balance
+
+        connection.execute(sqlalchemy.text("""INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
+                                            VALUES (:shop_id, :listing_id, :transaction_id, :quantity)"""),
+                                            {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
+
+        connection.execute(sqlalchemy.text("""INSERT INTO shop_balance_ledger (balance, shop_id)
+                                            VALUES (:balance, :shop_id)"""),
+                                            {"balance": balance, "shop_id": shop_id})
