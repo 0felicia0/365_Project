@@ -21,7 +21,7 @@ def create_cart(new_cart: NewCart):
             
             result = connection.execute(sqlalchemy.text("""INSERT INTO carts (user_id)
                                                             VALUES (:user_id)
-                                                            RETURNING id"""), {"name": new_cart.user_id})
+                                                            RETURNING cart_id"""), {"user_id": new_cart.user_id})
             
             cart_id = result.scalar()
 
@@ -29,7 +29,7 @@ def create_cart(new_cart: NewCart):
     return {"cart_id": cart_id}
 
 
-@router.post("/add_to_cart")
+@router.post("/set_item_quantity")
 def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
     with db.engine.begin() as connection:
