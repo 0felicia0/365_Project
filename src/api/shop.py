@@ -144,3 +144,67 @@ def create_listing(shoe: Shoe, listing: Listing):
         )
 
         return "OK"
+    
+# Verification EPs
+@router.post("/post_application")
+
+# If more than X shoes sold, return shop_id to send to update_verification
+def post_application(shop_id: int):
+    # arbitrary number
+    soldBreakpoint = 20
+    
+    with db.engine.begin() as connection:
+        shoesSold = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT SUM(quantity)
+                    FROM shoe_inventory_ledger
+                    WHERE shop_id = :shop_id
+                """
+            ),
+            [{"shop_id": shop_id}]
+        )
+        
+        if shoesSold >= soldBreakpoint:
+            return shop_id
+        else:
+            return "Failed Verification"
+
+# Set the status of the given shop_id to Verified (True)
+@router.post("/update_verification")
+def update_verification(shop_id: int):
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(
+                """
+                    UPDATE shops
+                    SET verified = :true
+                    WHERE shop_id = :shop_id
+                """
+            ),
+            [{
+                "true": True,
+                "shop_id": shop_id
+            }]
+        )
+        
+    return "OK"
+
+# Return verification status for a given shop_id
+@router.post("/verification_status")
+def verification_status(shop_id: int):
+    with db.engine.begin() as connection:
+        status = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT verified
+                    FROM shops
+                    WHERE shop_id = :shop_id
+                """
+            ),
+            [{
+                "shop_id": shop_id
+            }]
+        ).scalar()
+        
+        return status
