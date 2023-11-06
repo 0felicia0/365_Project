@@ -29,10 +29,8 @@ app = FastAPI(
 # TODO: add routers for each endpoint
 app.include_router(shop.router)
 app.include_router(carts.router)
-<<<<<<< HEAD
-=======
 
->>>>>>> 37494bac9a513dd9ae8f4f189994bdbd325e2573
+
 # app.include_router(catalog.router)
 # app.include_router(bottler.router)
 # app.include_router(barrels.router)
