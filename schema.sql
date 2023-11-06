@@ -81,11 +81,9 @@ create table
     store_name text not null,
     created_at timestamp with time zone not null default now(),
     verified boolean null default false,
-    transactions_id bigint null,
     constraint shops_pkey primary key (shop_id),
     constraint shops_seller_id_key unique (user_id),
-    constraint shops_shop_id_key unique (shop_id),
-    constraint shops_transactions_id_fkey foreign key (transactions_id) references transactions (id)
+    constraint shops_shop_id_key unique (shop_id)
   ) tablespace pg_default;
 
 create table
@@ -106,3 +104,41 @@ create table
     created_at timestamp with time zone not null default now(),
     constraint users_pkey primary key (user_id)
   ) tablespace pg_default;
+
+-- insert statements for initial population
+-- only hallie and mio with listings
+-- shoes: nike dunks, nike jordans, converse chucks
+-- 5 total listings: 2 hallie, 3 mio
+
+shoe_id1 = INSERT INTO shoes (brand, color, style) VALUES ("Nike", "Blue", "Dunk Lows") RETURNING shoe_id
+shoe_id2 = INSERT INTO shoes (brand, color, style) VALUES ("Nike", "Red", "Jordans") RETURNING shoe_id
+shoe_id3 = INSERT INTO shoes (brand, color, style) VALUES ("Converse", "Yellow", "Chuck Taylor High Tops") RETURNING shoe_id
+
+transaction_id1 = INSERT INTO transactions (description, tag) VALUES ("shoe uploaded: Blue,  Nike, Dunk Lows", "LISTING") RETURNING id
+transaction_id2 = INSERT INTO transactions (description, tag) VALUES ("shoe uploaded: Blue,  Nike, Dunk Lows", "LISTING") RETURNING id
+transaction_id3 = INSERT INTO transactions (description, tag) VALUES ("shoe uploaded: Red,  Nike, Jordans", "LISTING") RETURNING id
+transaction_id4 = INSERT INTO transactions (description, tag) VALUES ("shoe uploaded: Blue,  Nike, Dunk Lows", "LISTING") RETURNING id
+transaction_id5 = INSERT INTO transactions (description, tag) VALUES ("shoe uploaded: Yellow,  Converse, Chuck Taylor High Tops", "LISTING") RETURNING id
+
+user_id = INSERT INTO users (name, email, password) VALUES ("Hallie", "hallie@gmail.com", "scooter1") RETURNING user_id
+shop_id = INSERT INTO shops (store_name, user_id, verified) VALUES ("scooter shoes", user_id, FALSE) RETURNING shop_id
+listing_id = INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id) VALUES (shop_id, shoe_id1, 450, 6, transaction_id1)
+INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity) VALUES (shop_id, listing_id, transaction_id1, 1)
+listing_id = INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id) VALUES (shop_id, shoe_id1, 450, 7, transaction_id2)
+INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity) VALUES (shop_id, listing_id, transaction_id2, 1)
+
+
+user_id = INSERT INTO users (name, email, password) VALUES ("Felicia", "felicia@gmail.com", "scooter2") RETURNING user_id
+
+user_id = INSERT INTO users (name, email, password) VALUES ("Mio", "mio@gmail.com", "scooter3") RETURNING user_id
+shop_id = INSERT INTO shops (store_name, user_id, verified) VALUES ("scooter shoes", user_id, FALSE) RETURNING shop_id
+listing_id = INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id) VALUES (shop_id, shoe_id2, 550, 8, transaction_id3)
+INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity) VALUES (shop_id, listing_id, transaction_id3, 1)
+listing_id = INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id) VALUES (shop_id, shoe_id1, 350, 7, transaction_id4)
+INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity) VALUES (shop_id, listing_id, transaction_id4, 1)
+listing_id = INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id) VALUES (shop_id, shoe_id3, 90, 7, transaction_id5)
+INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity) VALUES (shop_id, listing_id, transaction_id5, 1)
+
+user_id = INSERT INTO users (name, email, password) VALUES ("Xander", "xander@gmail.com", "scooter4") RETURNING user_id
+  -- insert shops for mio and hallie
+  -- insert listings
