@@ -101,10 +101,20 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
     with db.engine.begin() as connection:
             
-            result = connection.execute(sqlalchemy.text("""INSERT INTO cart_items (listing_id, cart_id, quantity)
-                                                            VALUES (:listing_id, :cart_id, :quantity)
-                                                            """), {"listing_id": listing_id, "cart_id": cart_id, "quantity": quantity}) 
-    return "OK"
+            # check if enough available to enter into cart
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT SUM(shoe_inventory_ledger.quantity) as quantity
+                                                        FROM shoe_inventory_ledger
+                                                        WHERE listing_id = :listing_id
+                                                        """), {"listing_id": listing_id}).scalar_one()
+            if result >= quantity:
+            
+                connection.execute(sqlalchemy.text("""INSERT INTO cart_items (listing_id, cart_id, quantity)
+                                                        VALUES (:listing_id, :cart_id, :quantity)
+                                                        """), {"listing_id": listing_id, "cart_id": cart_id, "quantity": quantity}) 
+                return "OK"
+
+            return "insufficient quantity"
 
 @router.post("/checkout")
 def checkout(cart_id: int):
