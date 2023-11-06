@@ -1,12 +1,11 @@
 from fastapi import FastAPI, exceptions
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-<<<<<<< HEAD
+
 from src.api import shop
 from src.api import carts
-=======
 from src.api import shop, carts
->>>>>>> 37494bac9a513dd9ae8f4f189994bdbd325e2573
+
 import json
 import logging
 import sys
