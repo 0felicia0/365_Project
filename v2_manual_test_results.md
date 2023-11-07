@@ -79,5 +79,55 @@ Response: true
 # Example Workflow 2 - Client Creating a Shop/Creating a Listing
 A shoe seller has collected various rare shoes over the years and is looking to list their shoes for sale on Shoetopia. They first need to make an account. From there they will create their shop before finally making their listing.
 
+## Testing results for create_account
+Curl: curl -X 'POST' \
+  'https://shoetopia-avot.onrender.com/shop/create_account' \
+  -H 'accept: application/json' \
+  -H 'access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlvd3Fzdm5tZWd4bm9hbGJjdnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTgzNjgzMjUsImV4cCI6MjAxMzk0NDMyNX0.pb9Dq_POqNgChJNjtDCGUiIC0xlYxhcAP70vT5C_xuA' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "name": "Emma",
+  "email": "emma@gmail.com",
+  "password": "xyzauwaofjjrio"
+}'
+
+Response: "OK"
+
+## Testing results for create_shop
+
+Curl: curl -X 'POST' \
+  'https://shoetopia-avot.onrender.com/shop/create_shop?account_id=10' \
+  -H 'accept: application/json' \
+  -H 'access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlvd3Fzdm5tZWd4bm9hbGJjdnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTgzNjgzMjUsImV4cCI6MjAxMzk0NDMyNX0.pb9Dq_POqNgChJNjtDCGUiIC0xlYxhcAP70vT5C_xuA' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "store_name": "Emma'\''s awesome store"
+}'
+
+Response: "OK"
+
+## Testing results for create_shop
+
+Curl: curl -X 'POST' \
+  'https://shoetopia-avot.onrender.com/shop/create_listing' \
+  -H 'accept: application/json' \
+  -H 'access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlvd3Fzdm5tZWd4bm9hbGJjdnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTgzNjgzMjUsImV4cCI6MjAxMzk0NDMyNX0.pb9Dq_POqNgChJNjtDCGUiIC0xlYxhcAP70vT5C_xuA' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "shoe": {
+    "brand": "Adidas",
+    "color": "white",
+    "style": "sambas"
+  },
+  "listing": {
+    "shop_id": 13,
+    "quantity": 2,
+    "price": 300,
+    "size": 8
+  }
+}'
+
+Response: "OK"
+
 # Example Workflow 3 - Seller Applying for Verification
 Sellers may apply for verification on Shoetopia to demonstrate to potential buyers that a particular seller is trustworthy and an established reputation. After providing their shop id to create an application request, administrators will run a background check on the profile. The seller will be able to check the status of the application, and if the application is successful, their status will be update accordingly.
