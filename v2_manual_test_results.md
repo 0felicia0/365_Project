@@ -131,3 +131,5 @@ Response: "OK"
 
 # Example Workflow 3 - Seller Applying for Verification
 Sellers may apply for verification on Shoetopia to demonstrate to potential buyers that a particular seller is trustworthy and an established reputation. After providing their shop id to create an application request, administrators will run a background check on the profile. The seller will be able to check the status of the application, and if the application is successful, their status will be update accordingly.
+
+## Testing results for post_application
