@@ -133,3 +133,31 @@ Response: "OK"
 Sellers may apply for verification on Shoetopia to demonstrate to potential buyers that a particular seller is trustworthy and an established reputation. After providing their shop id to create an application request, administrators will run a background check on the profile. The seller will be able to check the status of the application, and if the application is successful, their status will be update accordingly.
 
 ## Testing results for post_application
+
+Curl: curl -X 'POST' \
+  'https://shoetopia-b1wk.onrender.com/shop/post_application?shop_id=11' \
+  -H 'accept: application/json' \
+  -H 'access_token: 06e62794d82751a1efb2db29ffdc27f8' \
+  -d ''
+
+Response: 11
+
+## Testing results for update_verification
+
+Curl: curl -X 'POST' \
+  'https://shoetopia-b1wk.onrender.com/shop/update_verification?shop_id=11&status=true' \
+  -H 'accept: application/json' \
+  -H 'access_token: 06e62794d82751a1efb2db29ffdc27f8' \
+  -d ''
+
+Response: "OK"
+
+## Testing results for verification_status
+
+Curl: curl -X 'POST' \
+  'https://shoetopia-b1wk.onrender.com/shop/verification_status?shop_id=11' \
+  -H 'accept: application/json' \
+  -H 'access_token: 06e62794d82751a1efb2db29ffdc27f8' \
+  -d ''
+
+Response: true
