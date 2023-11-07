@@ -151,7 +151,7 @@ def create_listing(shoe: Shoe, listing: Listing):
 # If more than X shoes sold, return shop_id to send to update_verification
 def post_application(shop_id: int):
     # arbitrary number
-    soldBreakpoint = 20
+    soldBreakpoint = 1
     
     with db.engine.begin() as connection:
         shoesSold = connection.execute(
