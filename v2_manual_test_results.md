@@ -8,6 +8,36 @@ POST/cart/id/items/product_id where product id is unique
 POST /carts/id/checkout
 GET /buyer/track_order
 The seller will receive their percentage of the sale, and Shoetopia will receive a percentage of the sale. Now, the customer will wait for their new shoes.
+## Testing results for filter
+
+curl -X 'GET' \
+  'http://127.0.0.1:8000/carts/fliters/?brand=Nike&min_price=1&sort_order=desc' \
+  -H 'accept: application/json' \
+  -H 'access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlvd3Fzdm5tZWd4bm9hbGJjdnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTgzNjgzMjUsImV4cCI6MjAxMzk0NDMyNX0.pb9Dq_POqNgChJNjtDCGUiIC0xlYxhcAP70vT5C_xuA'
+
+Response:
+  [
+    {
+      "listing_id": 15,
+      "quantity": 1,
+      "price": 550
+    },
+    {
+      "listing_id": 13,
+      "quantity": 1,
+      "price": 450
+    },
+    {
+      "listing_id": 14,
+      "quantity": 1,
+      "price": 450
+    },
+    {
+      "listing_id": 17,
+      "quantity": 1,
+      "price": 350
+    }
+  ]
 
 ## Testing results for create_cart
 
