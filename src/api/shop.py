@@ -163,7 +163,7 @@ def post_application(shop_id: int):
                 """
             ),
             [{"shop_id": shop_id}]
-        )
+        ).scalar()
         
         if shoesSold >= soldBreakpoint:
             return shop_id
