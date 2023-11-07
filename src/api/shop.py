@@ -172,18 +172,18 @@ def post_application(shop_id: int):
 
 # Set the status of the given shop_id to Verified (True)
 @router.post("/update_verification")
-def update_verification(shop_id: int):
+def update_verification(shop_id: int, status: bool):
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
                 """
                     UPDATE shops
-                    SET verified = :true
+                    SET verified = :status
                     WHERE shop_id = :shop_id
                 """
             ),
             [{
-                "true": True,
+                "status": status,
                 "shop_id": shop_id
             }]
         )
