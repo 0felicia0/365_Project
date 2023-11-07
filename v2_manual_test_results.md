@@ -66,6 +66,16 @@ Curl: curl -X 'POST' \
 
 Response: "OK"
 
+## Testing results for checkout
+
+Curl: curl -X 'POST' \
+  'https://shoetopia-avot.onrender.com/carts/checkout?cart_id=5' \
+  -H 'accept: application/json' \
+  -H 'access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlvd3Fzdm5tZWd4bm9hbGJjdnFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTgzNjgzMjUsImV4cCI6MjAxMzk0NDMyNX0.pb9Dq_POqNgChJNjtDCGUiIC0xlYxhcAP70vT5C_xuA' \
+  -d ''
+
+Response: true
+
 # Example Workflow 2 - Client Creating a Shop/Creating a Listing
 A shoe seller has collected various rare shoes over the years and is looking to list their shoes for sale on Shoetopia. They first need to make an account. From there they will create their shop before finally making their listing.
 
