@@ -15,7 +15,7 @@ class filter_sort_order(str, Enum):
     asc = "asc"
     desc = "desc"   
 
-@router.get("/fliters/", tags=["filters"])
+@router.get("/filters")
 def filter(
     brand: str = "",
     size: int = "",
@@ -80,7 +80,7 @@ def filter(
 class NewCart(BaseModel):
     user_id: int
 
-@router.post("/creat_cart")
+@router.post("/create_cart")
 def create_cart(new_cart: NewCart):
 
     """ """
