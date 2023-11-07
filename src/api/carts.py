@@ -123,11 +123,6 @@ def checkout(cart_id: int):
         description = f"Checkout for cart_id: {cart_id}"
         tag = "CHECKOUT"
 
-        res = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description, tag)
-                                            VALUES (:description, :tag) RETURNING id"""),
-                                            {"description": description, "tag": tag})
-        
-        transaction_id = res.fetchone()[0]
 
         res = connection.execute(sqlalchemy.text("""SELECT cart_items.quantity AS quantity, cart_items.listing_id AS listing_id
                                                   FROM cart_items WHERE cart_items.cart_id = :cart_id"""), {"cart_id": cart_id})
@@ -142,10 +137,28 @@ def checkout(cart_id: int):
         shop_id = first_row.shop_id
         balance = first_row.balance
 
-        connection.execute(sqlalchemy.text("""INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
+        #check if there is enough stock
+        res = connection.execute(sqlalchemy.text("""SELECT SUM(shoe_inventory_ledger.quantity) AS inventory
+                                                  FROM shoe_inventory_ledger WHERE shop_id = :shop_id AND listing_id = :listing_id"""), 
+                                                  {"shop_id": shop_id, "listing_id": listing_id})
+        first_row = res.first()
+        inventory = first_row.inventory
+
+        if inventory >= quantity:
+            res = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description, tag)
+                                            VALUES (:description, :tag) RETURNING id"""),
+                                            {"description": description, "tag": tag})
+        
+            transaction_id = res.fetchone()[0]
+
+            connection.execute(sqlalchemy.text("""INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
                                             VALUES (:shop_id, :listing_id, :transaction_id, :quantity)"""),
                                             {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
 
-        connection.execute(sqlalchemy.text("""INSERT INTO shop_balance_ledger (balance, shop_id)
+            connection.execute(sqlalchemy.text("""INSERT INTO shop_balance_ledger (balance, shop_id)
                                             VALUES (:balance, :shop_id)"""),
                                             {"balance": balance, "shop_id": shop_id})
+            
+            return True
+        
+        return False
