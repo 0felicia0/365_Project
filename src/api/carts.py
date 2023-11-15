@@ -30,7 +30,7 @@ def filter(
         order_by = order_by.desc()
     else:
         order_by = order_by.asc()
-    
+
          
     res= (
         sqlalchemy.select(
@@ -80,23 +80,38 @@ def filter(
 class NewCart(BaseModel):
     user_id: int
 
-@router.post("/create_cart")
+@router.post("/user_id/{user_id}/new_cart")
 def create_cart(new_cart: NewCart):
 
     """ """
     with db.engine.begin() as connection:
             
-            result = connection.execute(sqlalchemy.text("""INSERT INTO carts (user_id)
+            # result = connection.execute(sqlalchemy.text("""INSERT INTO carts (user_id)
+            #                                                 VALUES (:user_id)
+            #                                                 RETURNING cart_id"""), {"user_id": new_cart.user_id})
+            
+            # result = connection.execute(sqlalchemy.text("""INSERT INTO customers (name)
+            #                                                 VALUES (:name)
+            #                                                 ON CONFLICT (name) DO UPDATE
+            #                                                 SET name = EXCLUDED.name
+            #                                                 RETURNING id;"""), {"name": new_cart.customer})
+            try:
+                result = connection.execute(sqlalchemy.text("""INSERT INTO carts (user_id)
                                                             VALUES (:user_id)
-                                                            RETURNING cart_id"""), {"user_id": new_cart.user_id})
+                                                            ON CONFLICT (user_id) DO UPDATE
+                                                            SET user_id = EXCLUDED.user_id
+                                                            RETURNING user_id;"""), {"user_id": new_cart.user_id})
+            except Exception as e:
+                print("Error occured during execution of create_cart: {e}")
+            
             
             cart_id = result.scalar()
 
-    print(" cart_id: ", cart_id)
+    print("cart_id: ", cart_id)
     return {"cart_id": cart_id}
 
 
-@router.post("/set_item_quantity")
+@router.post("/{cart_id}/listing/{listing_id}/quantity/{quantity}")
 def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
     with db.engine.begin() as connection:
