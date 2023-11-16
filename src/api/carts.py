@@ -4,6 +4,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 from enum import Enum
+from urllib.error import HTTPError
 # hi
 router = APIRouter(
     prefix="/carts",
@@ -115,22 +116,46 @@ def create_cart(new_cart: NewCart):
 @router.post("/{cart_id}/listing/{listing_id}/quantity/{quantity}")
 def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
-    with db.engine.begin() as connection:
-            
-            # check if enough available to enter into cart
-            result = connection.execute(sqlalchemy.text("""
-                                                        SELECT SUM(shoe_inventory_ledger.quantity) as quantity
-                                                        FROM shoe_inventory_ledger
-                                                        WHERE listing_id = :listing_id
-                                                        """), {"listing_id": listing_id}).scalar_one()
-            if result >= quantity:
-            
-                connection.execute(sqlalchemy.text("""INSERT INTO cart_items (listing_id, cart_id, quantity)
-                                                        VALUES (:listing_id, :cart_id, :quantity)
-                                                        """), {"listing_id": listing_id, "cart_id": cart_id, "quantity": quantity}) 
-                return "OK"
 
-            return "insufficient quantity"
+    # make sure cart is active, listing exists, and enough quantity available
+
+    try:
+        with db.engine.begin() as connection:
+            # check if cart is active / exists, else raise 400 error (bad request)
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT cart_id, user_id, active
+                                                        FROM carts
+                                                        WHERE cart_id = :cart_id AND active = TRUE
+                                                        """)
+                                                        , {"cart_id": cart_id}).first()
+            if result is None:
+                raise HTTPError(url=None, code=400, msg="No active cart found with the given cart_id. Try making a new cart.", hdrs={}, fp=None)
+
+            #check if listing exists and has enough inventory, else raise 400 error
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT listings.listing_id, SUM(shoe_inventory_ledger.quantity)
+                                                        FROM listings
+                                                        JOIN shoe_inventory_ledger on listings.listing_id = shoe_inventory_ledger.listing_id
+                                                        WHERE listings.listing_id = :listing_id
+                                                        GROUP BY listings.listing_id
+                                                        HAVING SUM(shoe_inventory_ledger.quantity) >= :quantity
+                                                        """)
+                                                        , {"listing_id": listing_id, "quantity": quantity}).first()
+            if result is None:
+                raise HTTPError(url=None, code=400, msg="No listing found with the given listing_id and desired quantity.", hdrs={}, fp=None)
+
+            
+            # at this point we have valid inputs and sufficient quantity, add to the cart
+            connection.execute(sqlalchemy.text("""
+                                                INSERT INTO cart_items (listing_id, cart_id, quantity)
+                                                VALUES (:listing_id, :cart_id, :quantity)
+                                                """), 
+                                                {"listing_id": listing_id, "cart_id": cart_id, "quantity": quantity})  
+
+    except Exception as e:
+        print("Error occured during execution of set_tem_quantity: ", e)
+
+    return {"Item added to cart!"}
 
 @router.post("/checkout")
 def checkout(cart_id: int):
