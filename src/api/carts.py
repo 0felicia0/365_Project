@@ -83,31 +83,32 @@ class NewCart(BaseModel):
 @router.post("/user_id/{user_id}/new_cart")
 def create_cart(new_cart: NewCart):
 
-    """ """
-    with db.engine.begin() as connection:
-            
-            # result = connection.execute(sqlalchemy.text("""INSERT INTO carts (user_id)
-            #                                                 VALUES (:user_id)
-            #                                                 RETURNING cart_id"""), {"user_id": new_cart.user_id})
-            
-            # result = connection.execute(sqlalchemy.text("""INSERT INTO customers (name)
-            #                                                 VALUES (:name)
-            #                                                 ON CONFLICT (name) DO UPDATE
-            #                                                 SET name = EXCLUDED.name
-            #                                                 RETURNING id;"""), {"name": new_cart.customer})
-            try:
-                result = connection.execute(sqlalchemy.text("""INSERT INTO carts (user_id)
-                                                            VALUES (:user_id)
-                                                            ON CONFLICT (user_id) DO UPDATE
-                                                            SET user_id = EXCLUDED.user_id
-                                                            RETURNING user_id;"""), {"user_id": new_cart.user_id})
-            except Exception as e:
-                print("Error occured during execution of create_cart: {e}")
-            
-            
-            cart_id = result.scalar()
+    """ """            
+    try:
+        # plan: see if any active carts available
+        #       if none, create cart, else return the active one
 
-    print("cart_id: ", cart_id)
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT cart_id, user_id, active
+                                                        FROM carts
+                                                        WHERE active = TRUE AND user_id = :user_id
+                                                        """), 
+                                                        {"user_id": new_cart.user_id}).first()
+
+            if result is None:
+                print("No active cart with user_id:", new_cart.user_id, "| Creating new cart.")
+                cart_id = connection.execute(sqlalchemy.text("""
+                                                            INSERT INTO carts (user_id, active)
+                                                            VALUES (:user_id, TRUE)
+                                                            RETURNING cart_id;"""), 
+                                                            {"user_id": new_cart.user_id}).scalar()
+            else:
+                cart_id = result.cart_id
+
+    except Exception as e:
+        print("Error occured during execution of create_cart: ", e)
+    
     return {"cart_id": cart_id}
 
 
