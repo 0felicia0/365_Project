@@ -53,7 +53,7 @@ def create_account(new_account: NewAccount):
         return e.msg 
 
 
-@router.post("/{user_id}/get_account")
+@router.get("/{user_id}/get_account")
 def get_account(user_id: int):
     # plan: take in user id and check to see if it exists
     #       if exists, return email and name
@@ -73,4 +73,35 @@ def get_account(user_id: int):
 
     except Exception as e:
         return e.msg
-    
+
+
+@router.put("/change_password")
+def change_password(email: str, password: str, new_password: str):
+    # plan: take in email and password to ensure it is the right user
+    #       replace the password
+    try:
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT users.name, users.email, users.password
+                                                        FROM users
+                                                        WHERE users.email = :email AND users.password = :password
+                                                        """)
+                                                        , {"email": email, "password": password}).first()
+            if result is None:
+                raise HTTPError(url=None, code=400, msg="Wrong email and/or password. Try again with proper credentials.", hdrs={}, fp=None)
+            
+            if result.password == new_password:
+                raise HTTPError(url=None, code=400, msg="New password cannot be existing password. Try again.", hdrs={}, fp=None)
+
+            # update password
+            connection.execute(sqlalchemy.text("""
+                                                UPDATE users
+                                                SET password = :new_password
+                                                WHERE users.email = :email AND users.password = :password
+                                                """)
+                                                , {"email": email, "password": password, "new_password": new_password})
+            
+            return{"Password successfully changed!"}
+
+    except Exception as e:
+        return e.msg
