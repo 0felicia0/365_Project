@@ -3,36 +3,57 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+from urllib.error import HTTPError
 
 router = APIRouter(
     prefix="/shop",
     tags=["shop"],
     dependencies=[Depends(auth.get_api_key)],
 )
-class NewAccount(BaseModel):
-    name: str
-    email: str
-    password: str
+# class NewAccount(BaseModel):
+#     name: str
+#     email: str
+#     password: str
    
 
-@router.post("/create_account")
-def create_account(new_account: NewAccount):
-    #for testing purposes:
-    print("in create_account endpoint")
-    print("new_account: ", new_account)
-    #inserting information into the database
-    with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text(
-                """
-                INSERT INTO users
-                (name, email, password)
-                VALUES(:name, :email, :password)
-                """
-            ),
-            [{"name": new_account.name, "email": new_account.email, "password": new_account.password}]
-        )
-    return "OK"
+# @router.post("/create_account")
+# def create_account(new_account: NewAccount):
+#     # plan: check if account already exists with the email bc emails are generally unique
+#     #       if so, raise error that account already exists
+#     #       else, create the account
+#     #       potential upgrade -> restrict password in a certain way
+#     #       ENCRYPT PASSWORD!!!!! 
+
+#     try:
+#         with db.engine.begin() as connection:
+#             result = connection.execute(sqlalchemy.text("""
+#                                                         SELECT user_id, email
+#                                                         FROM users
+#                                                         WHERE email = :email
+#                                                         """)
+#                                                         , {"email": new_account.email}).first()
+
+#             # if the account exists, return message indicating so, otherwise make an account
+#             if result is None:
+#                 # create new account because email not already in the DB
+#                 # encrypt password
+#                 user_id = connection.execute(sqlalchemy.text("""
+#                                                     INSERT INTO users (name, email, password)
+#                                                     VALUES(:name, :email, :password)
+#                                                     RETURNING user_id
+#                                                     """
+#                                                 ),
+#                                                 [{"name": new_account.name, "email": new_account.email, "password": new_account.password}]).scalar()
+#                 return {"user_id": user_id}
+
+#             else:
+#                 raise HTTPError(url=None, code=400, msg="Account already exists with given email. Try a different email, or login with existing account.", hdrs={}, fp=None)
+        
+#     except Exception as e:
+#         print("Error occured during create_account execution: ", e)
+#         return {"Email already in use."}
+
+
 
 class NewShop(BaseModel):
     store_name: str

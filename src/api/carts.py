@@ -113,7 +113,7 @@ def create_cart(new_cart: NewCart):
     return {"cart_id": cart_id}
 
 
-@router.post("/{cart_id}/listing/{listing_id}/quantity/{quantity}")
+@router.post("cart/{cart_id}/listing/{listing_id}/quantity/{quantity}")
 def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
 
