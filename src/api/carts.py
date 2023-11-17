@@ -88,6 +88,7 @@ def create_cart(new_cart: NewCart):
     try:
         # plan: see if any active carts available
         #       if none, create cart, else return the active one
+        # see if other exceptions have a message field, can cause issues if not -> update the exception block
 
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -104,16 +105,44 @@ def create_cart(new_cart: NewCart):
                                                             VALUES (:user_id, TRUE)
                                                             RETURNING cart_id;"""), 
                                                             {"user_id": new_cart.user_id}).scalar()
-            else:
-                cart_id = result.cart_id
+                return {"cart_id": cart_id}
+            
+            raise HTTPError(url=None, code=400, msg="Cart already active with given user_id. Checkout before activating another cart.", hdrs={}, fp=None)
+
+    except HTTPError as e:
+        return e.msg
 
     except Exception as e:
-        print("Error occured during execution of create_cart: ", e)
+        print("Error in the process of creating a new cart: ", e)
     
-    return {"cart_id": cart_id}
+    
 
+@router.get("/user_id/{user_id}/get_cart")
+def get_cart(user_id: int):
 
-@router.post("cart/{cart_id}/listing/{listing_id}/quantity/{quantity}")
+    """ """            
+    try:
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT cart_id
+                                                        FROM carts
+                                                        WHERE active = TRUE AND user_id = :user_id
+                                                        """), 
+                                                        {"user_id": user_id}).first()
+
+            if result is not None:
+                return {"cart_id": result.cart_id}
+            
+            raise HTTPError(url=None, code=400, msg="No active cart found with given user_id.", hdrs={}, fp=None)
+
+    except HTTPError as e:
+        return e.msg
+    
+    except Exception as e:
+        print("Error in the process of getting an active/existing cart: ", e)
+    
+
+@router.post("/{cart_id}/listing/{listing_id}/quantity/{quantity}")
 def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     """Update DB to reflect adding a shoe to a specific cart"""
 
@@ -152,10 +181,14 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
                                                 """), 
                                                 {"listing_id": listing_id, "cart_id": cart_id, "quantity": quantity})  
 
+            return {"Item added to cart!"}
+    
+    except HTTPError as e:
+        return e.msg
+    
     except Exception as e:
-        print("Error occured during execution of set_tem_quantity: ", e)
+        print("Error in the process of adding an item to a cart: ", e)
 
-    return {"Item added to cart!"}
 
 @router.post("/checkout")
 def checkout(cart_id: int):

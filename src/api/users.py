@@ -10,12 +10,12 @@ router = APIRouter(
     tags=["users"],
     dependencies=[Depends(auth.get_api_key)],
 )
+
 class NewAccount(BaseModel):
     name: str
     email: str
     password: str
    
-
 @router.post("/create_account")
 def create_account(new_account: NewAccount):
     # plan: check if account already exists with the email bc emails are generally unique
@@ -105,3 +105,72 @@ def change_password(email: str, password: str, new_password: str):
 
     except Exception as e:
         return e.msg
+
+
+@router.put("/change_email")
+def change_email(email: str, password: str, new_email: str):
+    # plan: take in email and password to ensure it is the right user
+    #       replace the password
+    try:
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT users.name, users.email, users.password
+                                                        FROM users
+                                                        WHERE users.email = :email AND users.password = :password
+                                                        """)
+                                                        , {"email": email, "password": password}).first()
+            if result is None:
+                raise HTTPError(url=None, code=400, msg="Wrong email and/or password. Try again with proper credentials.", hdrs={}, fp=None)
+            
+            if result.email == new_email:
+                raise HTTPError(url=None, code=400, msg="New email cannot be existing email. Try again.", hdrs={}, fp=None)
+
+            # update password
+            connection.execute(sqlalchemy.text("""
+                                                UPDATE users
+                                                SET email = :new_email
+                                                WHERE users.email = :email AND users.password = :password
+                                                """)
+                                                , {"email": email, "password": password, "new_email": new_email})
+            
+            return{"Email successfully changed!"}
+
+    except Exception as e:
+        return e.msg
+
+
+# @router.put("/change_account_details")
+# def change_account_details(email: str, password: str, new_password: str = "", new_email: str = "", new_name: str = ""):
+#     # plan: take in email and password to ensure it is the right user
+#     #       replace the information with the new stuff
+#     #       ask how the change account details is typically done -> individual endpoints, or all in one go
+#     try:
+#         with db.engine.begin() as connection:
+#             result = connection.execute(sqlalchemy.text("""
+#                                                         SELECT users.name, users.email, users.password
+#                                                         FROM users
+#                                                         WHERE users.email = :email AND users.password = :password
+#                                                         """)
+#                                                         , {"email": email, "password": password}).first()
+#             if result is None:
+#                 raise HTTPError(url=None, code=400, msg="Wrong email and/or password. Try again with proper credentials.", hdrs={}, fp=None)
+            
+#             if result.password == new_password:
+#                 raise HTTPError(url=None, code=400, msg="New password cannot be existing password. Try again.", hdrs={}, fp=None)
+#             if result.email == new_email:
+#                 raise HTTPError(url=None, code=400, msg="New email cannot be existing email. Try again.", hdrs={}, fp=None)
+#             if result.name == name:
+#                 raise HTTPError(url=None, code=400, msg="New name cannot be existing name. Try again.", hdrs={}, fp=None)
+
+#             # update password
+#             connection.execute(sqlalchemy.text("""
+#                                                 UPDATE users
+#                                                 SET password = :new_password
+#                                                 WHERE users.email = :email AND users.password = :password
+#                                                 """)
+#                                                 , {"email": email, "password": password, "new_password": new_password})
+            
+#             return{"Password successfully changed!"}
+
+#     except Exception as e:
+#         return e.msg
