@@ -2,7 +2,7 @@ from fastapi import FastAPI, exceptions
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from src.api import shop, carts, users
+from src.api import shop, carts, users, search
 
 import json
 import logging
@@ -28,6 +28,7 @@ app = FastAPI(
 app.include_router(shop.router)
 app.include_router(carts.router)
 app.include_router(users.router)
+app.include_router(search.router)
 
 
 # app.include_router(catalog.router)
