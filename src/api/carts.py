@@ -12,70 +12,70 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
-class filter_sort_order(str, Enum):
-    asc = "asc"
-    desc = "desc"   
+# class filter_sort_order(str, Enum):
+#     asc = "asc"
+#     desc = "desc"   
 
-@router.get("/filters")
-def filter(
-    brand: str = "",
-    size: int = "",
-    color: str = "",
-    style: str = "",
-    min_price: int = 1,
-    max_price: int = "",
-    sort_order: filter_sort_order = filter_sort_order.desc,
-):
-    order_by = db.listings.c.price
-    if sort_order== filter_sort_order.desc:
-        order_by = order_by.desc()
-    else:
-        order_by = order_by.asc()
+# @router.get("/filters")
+# def filter(
+#     brand: str = "",
+#     size: int = "",
+#     color: str = "",
+#     style: str = "",
+#     min_price: int = 1,
+#     max_price: int = "",
+#     sort_order: filter_sort_order = filter_sort_order.desc,
+# ):
+#     order_by = db.listings.c.price
+#     if sort_order== filter_sort_order.desc:
+#         order_by = order_by.desc()
+#     else:
+#         order_by = order_by.asc()
 
          
-    res= (
-        sqlalchemy.select(
-                db.shoes.c.shoe_id,
-                db.shoes.c.brand,
-                db.shoes.c.color,
-                db.shoes.c.style,
-                db.shoes.c.transaction_id,
-                db.listings.c.listing_id,
-                db.listings.c.price,
-                db.listings.c.size,
-                db.shoe_inventory_ledger.c.quantity
-        )
-        .select_from(db.shoes
-            .join(db.listings, db.shoes.c.shoe_id == db.listings.c.shoe_id)         
-            .join(db.shoe_inventory_ledger, db.shoe_inventory_ledger.c.transaction_id == db.listings.c.transaction_id)
+#     res= (
+#         sqlalchemy.select(
+#                 db.shoes.c.shoe_id,
+#                 db.shoes.c.brand,
+#                 db.shoes.c.color,
+#                 db.shoes.c.style,
+#                 db.shoes.c.transaction_id,
+#                 db.listings.c.listing_id,
+#                 db.listings.c.price,
+#                 db.listings.c.size,
+#                 db.shoe_inventory_ledger.c.quantity
+#         )
+#         .select_from(db.shoes
+#             .join(db.listings, db.shoes.c.shoe_id == db.listings.c.shoe_id)         
+#             .join(db.shoe_inventory_ledger, db.shoe_inventory_ledger.c.transaction_id == db.listings.c.transaction_id)
             
-        )
-        .where(db.listings.c.price>=min_price)
-        .order_by(order_by)
-    )
+#         )
+#         .where(db.listings.c.price>=min_price)
+#         .order_by(order_by)
+#     )
     
-    if max_price != "":
-        res = res.where(db.listings.c.price<=max_price)
-    if brand != "":
-        res = res.where(db.shoes.c.brand.ilike(f"%{brand}%"))
-    if size != "":
-        res = res.where(db.listings.c.size == size)
-    if color != "":
-        res = res.where(db.shoes.c.color.ilike(f"%{color}%"))
-    if style != "":
-        res = res.where(db.shoes.c.style.ilike(f"%{style}%"))
+#     if max_price != "":
+#         res = res.where(db.listings.c.price<=max_price)
+#     if brand != "":
+#         res = res.where(db.shoes.c.brand.ilike(f"%{brand}%"))
+#     if size != "":
+#         res = res.where(db.listings.c.size == size)
+#     if color != "":
+#         res = res.where(db.shoes.c.color.ilike(f"%{color}%"))
+#     if style != "":
+#         res = res.where(db.shoes.c.style.ilike(f"%{style}%"))
 
-    ans = []
-    with db.engine.connect() as conn:
-        results = conn.execute(res)
-        for row in results:
-            result_item = {
-                "listing_id": row.listing_id,
-                "quantity": row.quantity,
-                "price": row.price
-            }
-            ans.append(result_item)
-    return ans
+#     ans = []
+#     with db.engine.connect() as conn:
+#         results = conn.execute(res)
+#         for row in results:
+#             result_item = {
+#                 "listing_id": row.listing_id,
+#                 "quantity": row.quantity,
+#                 "price": row.price
+#             }
+#             ans.append(result_item)
+#     return ans
 
 
 class NewCart(BaseModel):
