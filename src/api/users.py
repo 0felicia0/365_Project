@@ -52,7 +52,7 @@ def create_account(new_account: NewAccount):
         return h.msg
 
     except Exception as e:
-        return e
+         print("Error in the process of creating account: ", e)
 
 
 @router.get("/{user_id}/get_account")
@@ -77,7 +77,7 @@ def get_account(user_id: int):
         return h.msg
 
     except Exception as e:
-        return e.msg
+         print("Error in the process of getting account: ", e)
 
 
 @router.put("/change_password")
@@ -112,7 +112,7 @@ def change_password(email: str, password: str, new_password: str):
         return h.msg
 
     except Exception as e:
-        return e.msg
+        print("Error in the process of changing password: ", e)
 
 
 @router.put("/change_email")
@@ -147,4 +147,4 @@ def change_email(email: str, password: str, new_email: str):
         return h.msg
 
     except Exception as e:
-        return e.msg
+         print("Error in the process of changing password: ", e)
