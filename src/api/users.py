@@ -21,8 +21,7 @@ def create_account(new_account: NewAccount):
     # plan: check if account already exists with the email bc emails are generally unique
     #       if so, raise error that account already exists
     #       else, create the account
-    #       potential upgrade -> restrict password in a certain way
-    #       ENCRYPT PASSWORD!!!!! 
+    #       potential upgrade -> restrict password in a certain way (maybe)
 
     try:
         with db.engine.begin() as connection:
@@ -48,9 +47,12 @@ def create_account(new_account: NewAccount):
 
             else:
                 raise HTTPError(url=None, code=400, msg="Account already exists with given email. Try a different email, or login with existing account.", hdrs={}, fp=None)
-        
+    
+    except HTTPError as h:
+        return h.msg
+
     except Exception as e:
-        return e.msg 
+        return e
 
 
 @router.get("/{user_id}/get_account")
@@ -70,6 +72,9 @@ def get_account(user_id: int):
                 raise HTTPError(url=None, code=400, msg="Account does not exist with given user_id. Try again with a different user_id.", hdrs={}, fp=None)
             
             return{"Name": result.name, "Email": result.email}
+
+    except HTTPError as h:
+        return h.msg
 
     except Exception as e:
         return e.msg
@@ -103,6 +108,9 @@ def change_password(email: str, password: str, new_password: str):
             
             return{"Password successfully changed!"}
 
+    except HTTPError as h:
+        return h.msg
+
     except Exception as e:
         return e.msg
 
@@ -135,42 +143,8 @@ def change_email(email: str, password: str, new_email: str):
             
             return{"Email successfully changed!"}
 
+    except HTTPError as h:
+        return h.msg
+
     except Exception as e:
         return e.msg
-
-
-# @router.put("/change_account_details")
-# def change_account_details(email: str, password: str, new_password: str = "", new_email: str = "", new_name: str = ""):
-#     # plan: take in email and password to ensure it is the right user
-#     #       replace the information with the new stuff
-#     #       ask how the change account details is typically done -> individual endpoints, or all in one go
-#     try:
-#         with db.engine.begin() as connection:
-#             result = connection.execute(sqlalchemy.text("""
-#                                                         SELECT users.name, users.email, users.password
-#                                                         FROM users
-#                                                         WHERE users.email = :email AND users.password = :password
-#                                                         """)
-#                                                         , {"email": email, "password": password}).first()
-#             if result is None:
-#                 raise HTTPError(url=None, code=400, msg="Wrong email and/or password. Try again with proper credentials.", hdrs={}, fp=None)
-            
-#             if result.password == new_password:
-#                 raise HTTPError(url=None, code=400, msg="New password cannot be existing password. Try again.", hdrs={}, fp=None)
-#             if result.email == new_email:
-#                 raise HTTPError(url=None, code=400, msg="New email cannot be existing email. Try again.", hdrs={}, fp=None)
-#             if result.name == name:
-#                 raise HTTPError(url=None, code=400, msg="New name cannot be existing name. Try again.", hdrs={}, fp=None)
-
-#             # update password
-#             connection.execute(sqlalchemy.text("""
-#                                                 UPDATE users
-#                                                 SET password = :new_password
-#                                                 WHERE users.email = :email AND users.password = :password
-#                                                 """)
-#                                                 , {"email": email, "password": password, "new_password": new_password})
-            
-#             return{"Password successfully changed!"}
-
-#     except Exception as e:
-#         return e.msg
