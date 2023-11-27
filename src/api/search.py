@@ -62,7 +62,17 @@ def filter(
     else:
         order_by = order_by.asc()
 
-         
+    # quantity = (
+    #     sqlalchemy.select(
+    #         db.shoe_inventory_ledger.c.listing_id,
+    #         sqlalchemy.sum(db.shoe_inventory_ledger.c.quantity)
+    #     )
+    #     .select_from(db.shoe_inventory_ledger)
+    #     .group_by(db.shoe_inventory_ledger.c.listing_id)
+    # )  
+
+    
+
     res= (
         sqlalchemy.select(
                 db.shoes.c.shoe_id,
@@ -73,16 +83,30 @@ def filter(
                 db.listings.c.listing_id,
                 db.listings.c.price,
                 db.listings.c.size,
-                db.shoe_inventory_ledger.c.quantity,
-                db.listings.c.condition
+                db.listings.c.condition,
+                sqlalchemy.literal_column("quantities.total_quantity").label("total_quantity"),  # Include total_quantity
+
         )
-        .select_from(db.shoes
-            .join(db.listings, db.shoes.c.shoe_id == db.listings.c.shoe_id)         
-            .join(db.shoe_inventory_ledger, db.shoe_inventory_ledger.c.transaction_id == db.listings.c.transaction_id)
-            
+       .select_from(
+        db.shoes
+        .join(db.listings, db.shoes.c.shoe_id == db.listings.c.shoe_id)
+        .join(
+            (
+                sqlalchemy.select(
+                    db.shoe_inventory_ledger.c.listing_id,
+                    sqlalchemy.func.sum(db.shoe_inventory_ledger.c.quantity).label("total_quantity")
+                )
+                .select_from(db.shoe_inventory_ledger)
+                .group_by(db.shoe_inventory_ledger.c.listing_id)
+                .having(sqlalchemy.func.sum(db.shoe_inventory_ledger.c.quantity) > 0)  # Filter for total_quantity > 0
+
+            ).alias("quantities"),
+            db.listings.c.listing_id == sqlalchemy.literal_column("quantities.listing_id")
         )
-        .where(db.listings.c.price>=min_price)
-        .order_by(order_by)
+    )
+    .where(db.listings.c.price >= min_price
+   )
+    .order_by(order_by)
     )
     
     if max_price != "":
@@ -118,8 +142,9 @@ def filter(
             if i>=page_range_lower and i<page_range_upper:
                 result_item = {
                     "listing_id": row.listing_id,
-                    "quantity": row.quantity,
+                    "quantity": row.total_quantity,
                     "price": row.price
+
                 }
                 ans.append(result_item)
             i = i+1
