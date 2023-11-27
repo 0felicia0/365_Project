@@ -9,7 +9,7 @@ The API calls are made in this sequence when making a purchase:
 4. `Checkout Cart`
 5. `Track order` (can happen whenever after a purchase)
 
-### 1.1. Browse catalog - `/catalog/filters` (POST)
+### 1.1. Browse catalog - `/search/filters` (POST)
 
 Creates a new cart for a specific customer.
 
@@ -17,12 +17,17 @@ Creates a new cart for a specific customer.
 
 ```json
 {
+    "	
+    "search_page": string,
     "brand”: string,
+    "gender": gender,
     “size”: int,
-    “colors”: [ ],
-    “style”: string (this would be constrained to options like: high tops, low, mid, etc)
+    “color”: colors,
+    “style”: string,
+    "condition": condition,
     “min_price”: int,
-    “max_price”: int
+    “max_price”: int,
+    "sort_order": sort_order = desc
 }
 ```
 
