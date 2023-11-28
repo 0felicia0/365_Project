@@ -60,6 +60,7 @@ create table
     transaction_id bigint not null,
     constraint test - shoes_pkey primary key (shoe_id),
     constraint shoes_transaction_id_fkey foreign key (transaction_id) references transactions (id)
+    constraint unique_brand_color_style unique(brand, color, style)
   ) tablespace pg_default;
 
 create table
