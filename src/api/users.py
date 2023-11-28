@@ -27,28 +27,23 @@ def create_account(new_account: NewAccount):
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
-                                                        SELECT user_id, email
-                                                        FROM users
-                                                        WHERE email = :email
-                                                        """)
-                                                        , {"email": new_account.email}).first()
+                INSERT INTO users (name, email, password)
+                VALUES (:name, :email, :password)
+                ON CONFLICT (email) DO NOTHING
+                RETURNING user_id
+            """),
+            {"name": new_account.name, "email": new_account.email, "password": new_account.password}).first()
 
-            # if the account exists, return message indicating so, otherwise make an account
-            if result is None:
-                # create new account because email not already in the DB
-                # encrypt password
-                user_id = connection.execute(sqlalchemy.text("""
-                                                    INSERT INTO users (name, email, password)
-                                                    VALUES(:name, :email, :password)
-                                                    RETURNING user_id
-                                                    """
-                                                ),
-                                                [{"name": new_account.name, "email": new_account.email, "password": new_account.password}]).scalar()
-                return {"user_id": user_id}
-
+            if result is not None:
+                return {"user_id": result.user_id}
             else:
-                raise HTTPError(url=None, code=400, msg="Account already exists with given email. Try a different email, or login with existing account.", hdrs={}, fp=None)
-    
+                raise HTTPError(
+                    url=None,
+                    code=400,
+                    msg="Account already exists with given email. Try a different email, or login with an existing account.",
+                    hdrs={},
+                    fp=None
+                )
     except HTTPError as h:
         return h.msg
 

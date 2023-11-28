@@ -6,77 +6,62 @@ from src import database as db
 from datetime import datetime
 from enum import Enum
 from urllib.error import HTTPError
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(
     prefix="/shop",
     tags=["shop"],
     dependencies=[Depends(auth.get_api_key)],
 )
-# class NewAccount(BaseModel):
-#     name: str
-#     email: str
-#     password: str
-   
-
-# @router.post("/create_account")
-# def create_account(new_account: NewAccount):
-#     # plan: check if account already exists with the email bc emails are generally unique
-#     #       if so, raise error that account already exists
-#     #       else, create the account
-#     #       potential upgrade -> restrict password in a certain way
-#     #       ENCRYPT PASSWORD!!!!! 
-
-#     try:
-#         with db.engine.begin() as connection:
-#             result = connection.execute(sqlalchemy.text("""
-#                                                         SELECT user_id, email
-#                                                         FROM users
-#                                                         WHERE email = :email
-#                                                         """)
-#                                                         , {"email": new_account.email}).first()
-
-#             # if the account exists, return message indicating so, otherwise make an account
-#             if result is None:
-#                 # create new account because email not already in the DB
-#                 # encrypt password
-#                 user_id = connection.execute(sqlalchemy.text("""
-#                                                     INSERT INTO users (name, email, password)
-#                                                     VALUES(:name, :email, :password)
-#                                                     RETURNING user_id
-#                                                     """
-#                                                 ),
-#                                                 [{"name": new_account.name, "email": new_account.email, "password": new_account.password}]).scalar()
-#                 return {"user_id": user_id}
-
-#             else:
-#                 raise HTTPError(url=None, code=400, msg="Account already exists with given email. Try a different email, or login with existing account.", hdrs={}, fp=None)
-        
-#     except Exception as e:
-#         print("Error occured during create_account execution: ", e)
-#         return {"Email already in use."}
-
-
 
 class NewShop(BaseModel):
     store_name: str
 
 @router.post("/create_shop")
 def  create_shop(account_id: int, new_shop: NewShop):
-    #for testing purposes
-    print("in create_shop endpoint")
-    print("account_id: ", account_id, "new_shop: ", new_shop)
+    try: 
+        with db.engine.begin() as connection:
+            # check if account exists
+            account = connection.execute(sqlalchemy.text("""
+                                                        SELECT users.name
+                                                        FROM users
+                                                        WHERE users.user_id = :user_id
+                                                        """), {"user_id": account_id}).first()
+            if account is None:
+                raise ValueError("Account does not exist. Cannot create a shop.") 
+            
+            # check if user already has a shop
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT shops.user_id
+                                                        FROM shops
+                                                        WHERE shops.user_id = :user_id
+                                                        """), {"user_id": account_id}).first()
+            
+            # if account already has a shop, they cannot have another one
+            if result is not None:
+                raise ValueError("A shop already exists with the account. Cannot have more than one shop active.")
+   
+            shop_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    INSERT INTO shops (user_id, store_name)
+                    VALUES(:user_id, :store_name)
+                    ON CONFLICT (store_name)
+                    DO NOTHING
+                    RETURNING shop_id
+                    """
+                ),
+                [{"user_id": account_id, "store_name": new_shop.store_name}]
+            ).scalar_one_or_none()
+            
+        if shop_id is None:
+            raise ValueError("Shop name must be unique. Try Again.")
 
-    with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text(
-                """
-                INSERT INTO shops (user_id, store_name)
-                VALUES(:user_id, :store_name)
-                """
-            ),
-            [{"user_id": account_id, "store_name": new_shop.store_name}]
-        )
-    return "OK"
+        return {"shop_id": shop_id}
+            
+    except Exception as e:
+        return {f"Error in creating a shop: {e}"}
+
 
 class colors(str, Enum):
     Black = "Black"
