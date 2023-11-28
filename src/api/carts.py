@@ -190,7 +190,10 @@ def checkout(cart_id: int):
                 # retrieve sale_start
                 saleInfo = connection.execute(sqlalchemy.text(
                     """
-                        SELECT discount_counter, price_modifier, sale_start
+                        SELECT 
+                            discount_counter,
+                            price_percentage,
+                            EXTRACT(epoch FROM sale_start)::int startTime
                         FROM shops
                         WHERE shop_id = :shop_id
                     """
@@ -198,26 +201,28 @@ def checkout(cart_id: int):
                                    [{
                                        "shop_id": shop_id
                                    }]
-                )
-                # identify if any listings in cart are from shops with sales
-                    # count transations since sale's start date, compare to disCounter
+                ).first()
+                # identify if any listings in cart are from shops with active sales
+                    # count shoes sold since sale's start date, compare to disCounter
                 amtDiscounted = connection.execute(sqlalchemy.text(
                     """
                         SELECT
-                            SUM(quantity)
+                            SUM(quantity) as amtDiscounted
                         FROM shoe_inventory_ledger
                         WHERE shop_id = :shop_id AND quantity < 0
-                        AND DATEDIFF(created_at, :startTime) > 0
+                        AND (EXTRACT(epoch FROM created_at)::int - :startTime) > 0
                     """
                 ),
                                    [{
                                        "shop_id": shop_id,
-                                       "startTime": saleInfo.sale_start
+                                       "startTime": saleInfo[2]
                                    }]
                                    ).scalar()
+                
+                amtDiscounted = abs(amtDiscounted)
                 if amtDiscounted < saleInfo.discount_counter:
                 # if sale, check remaining discounted sales and compare to shoes
-                    discPrice = price * saleInfo.price_modifier
+                    discPrice = price * saleInfo.price_percentage
                     discountsLeft =  saleInfo.discount_counter - amtDiscounted
                     
                     # 3 shoes to buy, 5 discounts left

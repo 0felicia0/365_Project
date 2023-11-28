@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+from datetime import datetime
 from enum import Enum
 from urllib.error import HTTPError
 from sqlalchemy.exc import IntegrityError
@@ -182,43 +183,49 @@ def post_application(shop_id: int):
             timesSold = connection.execute(
                 sqlalchemy.text(
                     """
-                        SELECT COUNT(*)
+                        SELECT COUNT(*) AS sold, shop_id
                         FROM shoe_inventory_ledger
                         WHERE quantity < 0 AND shop_id = :shop_id
+                        GROUP BY shop_id
                     """
                 ),
                 [{"shop_id": shop_id}]
-            ).scalar()
-            
-            if timesSold >= breakpoint:
-                return shop_id
+            ).first()
+            if timesSold is None:
+                raise Exception("Invalid shop id.")
+            if timesSold.sold >= breakpoint:
+                return timesSold.shop_id
             else:
                 return "Failed Verification"
         except Exception as e:
-            print("Error while posting application: ", e)
+            print("Error while posting application:", e)
 
 # Set the status of the given shop_id to Verified (True)
 @router.post("/update_verification")
 def update_verification(shop_id: int, status: bool):
     with db.engine.begin() as connection:
         try:
-            connection.execute(
+            id = connection.execute(
                 sqlalchemy.text(
                     """
                         UPDATE shops
                         SET verified = :status
                         WHERE shop_id = :shop_id
+                        RETURNING shop_id
                     """
                 ),
                 [{
                     "status": status,
                     "shop_id": shop_id
                 }]
-            )
-        
-            return "OK"
+            ).scalar()
+            
+            if id is None:
+                raise Exception("Invalid shop id.")
+            
+            return id
         except Exception as e:
-            print("Error while updating verification status: ", e)
+            print("Error while updating verification status:", e)
 
 # Return verification status for a given shop_id
 @router.get("/verification_status")
@@ -237,33 +244,82 @@ def verification_status(shop_id: int):
                     "shop_id": shop_id
                 }]
             ).scalar()
-            
+            if status is None:
+                raise Exception("Invalid shop id.")
             return status
         except Exception as e:
-            print("Error while retrieving verification status: ", e)
+            print("Error while retrieving verification status:", e)
             
 # Flash Sale EPs
 
 @router.get("/start_flash_sale")
-def start_flash_sale(shop_id: int, disCounter: int, priceModifier: float):
+def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
     with db.engine.begin() as connection:
         try:
-            # update discounter_counter in shops to disCounter
-            connection.execute(
-                sqlalchemy.text(
+            # check if sale is currently ongoing
+            # retrieve sale_start
+            saleInfo = connection.execute(sqlalchemy.text(
+                """
+                    SELECT 
+                        discount_counter,
+                        price_percentage,
+                        EXTRACT(epoch FROM sale_start)::int
+                    FROM shops
+                    WHERE shop_id = :shop_id
+                """
+                ),
+                    [{
+                        "shop_id": shop_id
+                    }]
+                ).first()
+            if saleInfo is None:
+                    raise Exception("Invalid shop id.")
+
+            # retrieve amount discounted
+            discountInfo = connection.execute(sqlalchemy.text(
                     """
-                        UPDATE shops
-                        SET discounter_counter = :disCounter, price_modifier = :priceModifier
-                        WHERE shop_id = :shop_id
+                        SELECT
+                            SUM(quantity) as amtDiscounted, shop_id
+                        FROM shoe_inventory_ledger
+                        WHERE shop_id = :shop_id AND quantity < 0
+                        AND (EXTRACT(epoch FROM created_at)::int - :startTime) > 0
+                        GROUP BY shop_id
                     """
                 ),
-                [{
-                    "disCounter": disCounter,
-                    "priceModifier": priceModifier,
-                    "shop_id": shop_id
-                }]
-            )
+                                   [{
+                                       "shop_id": shop_id,
+                                       "startTime": saleInfo[1]
+                                   }]
+                                   ).scalar()
+            if discountInfo is None:
+                amtDiscounted = 0
+            else:
+                amtDiscounted = abs(discountInfo.amtDiscounted)
             
-            return "Sale started for shop %d for %d shoes at %d%% price.", shop_id, disCounter, (priceModifier * 100)
+            # sale is still active, can't start new sale.
+            if amtDiscounted < saleInfo.discount_counter:    
+                return "Sale for shop %d is still active for %d more shoe(s) at %d%% price." % (shop_id, (saleInfo.discount_counter - amtDiscounted), pricePercentage)
+            
+            # update discounter_counter in shops to disCounter
+            else:
+                connection.execute(
+                    sqlalchemy.text(
+                        """
+                            UPDATE shops
+                            SET 
+                                discount_counter = :disCounter,
+                                price_percentage = :pricePercentage,
+                                sale_start = :startTime
+                            WHERE shop_id = :shop_id
+                        """
+                    ),
+                    [{
+                        "disCounter": disCounter,
+                        "pricePercentage": pricePercentage,
+                        "shop_id": shop_id,
+                        "startTime": datetime.now().astimezone()
+                    }]
+                )
+                return "Sale started for shop %d for %d shoe(s) at %d%% price." % (shop_id, disCounter, pricePercentage)
         except Exception as e:
             print("Error while starting flash sale: ", e)
