@@ -55,6 +55,7 @@ def filter(
     min_price: int = 1,
     max_price: int = "",
     sort_order: filter_sort_order = filter_sort_order.desc,
+    shop_id: str = ""
 ):
     order_by = db.listings.c.price
     if sort_order== filter_sort_order.desc:
@@ -84,6 +85,8 @@ def filter(
                 db.listings.c.price,
                 db.listings.c.size,
                 db.listings.c.condition,
+                db.listings.c.gender,
+                db.listings.c.shop_id,
                 sqlalchemy.literal_column("quantities.total_quantity").label("total_quantity"),  # Include total_quantity
 
         )
@@ -123,7 +126,10 @@ def filter(
         res = res.where(db.listings.c.gender == gender)
     if condition != "":
         res = res.where(db.listings.c.condition == condition)
-     
+    if shop_id != "":
+        res = res.where(db.listings.c.shop_id == shop_id) 
+    
+    
     if search_page == "":
         search_page = 1
     else:
@@ -143,11 +149,21 @@ def filter(
                 result_item = {
                     "listing_id": row.listing_id,
                     "quantity": row.total_quantity,
-                    "price": row.price
+                    "price": row.price,
+                    "shop id": row.shop_id,
+                    "brand": row.brand,
+                    "color": row.color,
+                    "style": row.style,
+                    "condition": row.condition,
+                    "gender": row.gender
 
                 }
                 ans.append(result_item)
             i = i+1
+    if ans == [] and search_page==1:
+        return "no results, please modify your search"
+    elif ans == []:
+        return "no results on this page"
     return ans
 
 # @router.get("/filters")
