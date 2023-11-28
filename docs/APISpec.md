@@ -324,7 +324,7 @@ Starts a flash sale for a particular shop
 {
     "shop_id": "int",
     "disCounter": "int",
-    "priceModifier": "float"
+    "priceModifier": "int"
 }
 ```
 
