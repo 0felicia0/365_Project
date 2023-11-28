@@ -5,6 +5,8 @@ import sqlalchemy
 from src import database as db
 from enum import Enum
 from urllib.error import HTTPError
+from sqlalchemy.exc import IntegrityError
+
 # hi
 router = APIRouter(
     prefix="/carts",
