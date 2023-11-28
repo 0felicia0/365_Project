@@ -116,7 +116,9 @@ create table
     email text not null,
     password text not null,
     created_at timestamp with time zone not null default now(),
-    constraint users_pkey primary key (user_id)
+    constraint users_pkey primary key (user_id),
+    constraint users_email_key unique (email),
+    constraint users_password_key unique (password)
   ) tablespace pg_default;
 
 -- insert statements for initial population

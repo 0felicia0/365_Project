@@ -11,13 +11,12 @@ The API calls are made in this sequence when making a purchase:
 
 ### 1.1. Browse catalog - `/search/filters` (POST)
 
-Creates a new cart for a specific customer.
+Filters shoe catalog.
 
 **Request**:
 
 ```json
 {
-    "	
     "search_page": string,
     "brand”: string,
     "gender": gender,
@@ -38,7 +37,7 @@ Creates a new cart for a specific customer.
  {
     “listing_id": "integer",
     "quantity": "integer",
-    "price": "integer", 
+    "price": "integer"
  }
 ]
 ```
@@ -84,6 +83,8 @@ Updates the quantity of a specific item in a cart.
     "success": "boolean"
 }
 ```
+
+
 
 ### 1.4. Checkout Cart - `/carts/{cart_id}/checkout` (POST)
 
@@ -240,8 +241,8 @@ This endpoint allows first time users (regardless of if they are a seller/buyer)
 **Request**:
 ```json
 {
-    “Name”: string
-    “Email”: string
+    “Name”: string,
+    “Email”: string,
     “Password”: string
 }
 ```
@@ -249,5 +250,69 @@ This endpoint allows first time users (regardless of if they are a seller/buyer)
 ```json
 {
     “Success”: boolean
+}
+```
+
+### 3.6. Retrieve Account - `/{user_id}/get_account` (GET)
+
+Retrieves name and emial associated with user_id
+**Request**:
+
+```json
+{
+	"user_id": "integer"
+}
+```
+
+**Returns**:
+
+```json
+{
+    "name": "text", 
+    "email": "text"
+}
+```
+
+### 3.7. Change Password - `/change_password` (PUT)
+
+Changes password with valid inputs
+
+**Request**:
+
+```json
+{
+	"email": "text",
+    "password": "text",
+    "new_password": "text"
+}
+```
+
+**Returns**:
+
+```json
+{
+    "success_msg": "text"
+}
+```
+
+### 3.7. Change Email - `/change_email` (PUT)
+
+Changes email with valid inputs
+
+**Request**:
+
+```json
+{
+	"email": "text",
+    "password": "text",
+    "new_email": "text"
+}
+```
+
+**Returns**:
+
+```json
+{
+    "success_msg": "text"
 }
 ```

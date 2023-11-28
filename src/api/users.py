@@ -22,6 +22,7 @@ def create_account(new_account: NewAccount):
     #       if so, raise error that account already exists
     #       else, create the account
     #       potential upgrade -> restrict password in a certain way (maybe)
+    #       try on conflict to minimize code
 
     try:
         with db.engine.begin() as connection:
