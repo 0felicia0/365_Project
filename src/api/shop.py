@@ -54,12 +54,12 @@ def  create_shop(account_id: int, new_shop: NewShop):
             ).scalar_one_or_none()
             
         if shop_id is None:
-            raise ValueError("Integrity error with shop_name. Must be unique. Try Again.")
+            raise ValueError("Shop name must be unique. Try Again.")
 
         return {"shop_id": shop_id}
             
-    except Exception as v:
-        return {f"Error in creating a shop: {v}"}
+    except Exception as e:
+        return {f"Error in creating a shop: {e}"}
 
 
 class colors(str, Enum):
