@@ -217,7 +217,7 @@ def checkout(cart_id: int):
                     cart_items.quantity AS quantity,
                     cart_items.listing_id AS listing_id,
                     listings.shop_id AS shop_id,
-                    (listings.price * cart_items.quantity) AS balance
+                    listings.price AS price
                 FROM
                     cart_items
                 JOIN
@@ -226,7 +226,8 @@ def checkout(cart_id: int):
                     cart_items.cart_id = :cart_id"""), {"cart_id": cart_id}).fetchall()
 
             for row in cart_items_info:
-                quantity, listing_id, shop_id, balance = row
+                quantity, listing_id, shop_id, price = row
+                balance = 0
 
                 # Check if there is enough stock
                 inventory = connection.execute(sqlalchemy.text("""
@@ -247,6 +248,53 @@ def checkout(cart_id: int):
                     VALUES (:shop_id, :listing_id, :transaction_id, :quantity)
                 """), {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
      
+                
+                # retrieve sale_start
+                saleInfo = connection.execute(sqlalchemy.text(
+                    """
+                        SELECT discount_counter, price_modifier, sale_start
+                        FROM shops
+                        WHERE shop_id = :shop_id
+                    """
+                ),
+                                   [{
+                                       "shop_id": shop_id
+                                   }]
+                )
+                # identify if any listings in cart are from shops with sales
+                    # count transations since sale's start date, compare to disCounter
+                amtDiscounted = connection.execute(sqlalchemy.text(
+                    """
+                        SELECT
+                            SUM(quantity)
+                        FROM shoe_inventory_ledger
+                        WHERE shop_id = :shop_id AND quantity < 0
+                        AND DATEDIFF(created_at, :startTime) > 0
+                    """
+                ),
+                                   [{
+                                       "shop_id": shop_id,
+                                       "startTime": saleInfo.sale_start
+                                   }]
+                                   ).scalar()
+                if amtDiscounted < saleInfo.discount_counter:
+                # if sale, check remaining discounted sales and compare to shoes
+                    discPrice = price * saleInfo.price_modifier
+                    discountsLeft =  saleInfo.discount_counter - amtDiscounted
+                    
+                    # 3 shoes to buy, 5 discounts left
+                    if discountsLeft >= quantity:
+                        balance += (quantity * discPrice)
+                    # 5 shoes to but, 3 discounts left
+                    else:
+                        balance += (discountsLeft * discPrice)
+                        balance += ((quantity - discountsLeft) * price)
+                else:
+                # reached if no active sale
+                    balance += quantity * price
+                
+                balance = int(balance)
+                
                 # Update shop balance ledger
                 connection.execute(sqlalchemy.text("""
                     INSERT INTO shop_balance_ledger (balance, shop_id)
