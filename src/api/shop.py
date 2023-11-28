@@ -170,60 +170,95 @@ def create_listing(shoe: Shoe, listing: Listing):
 # If more than X shoes sold, return shop_id to send to update_verification
 def post_application(shop_id: int):
     # arbitrary number
-    soldBreakpoint = 1
+    breakpoint = 5
     
     with db.engine.begin() as connection:
-        shoesSold = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT SUM(quantity)
-                    FROM shoe_inventory_ledger
-                    WHERE shop_id = :shop_id
-                """
-            ),
-            [{"shop_id": shop_id}]
-        ).scalar()
-        
-        if shoesSold >= soldBreakpoint:
-            return shop_id
-        else:
-            return "Failed Verification"
+        try:
+            timesSold = connection.execute(
+                sqlalchemy.text(
+                    """
+                        SELECT COUNT(*)
+                        FROM shoe_inventory_ledger
+                        WHERE quantity < 0 AND shop_id = :shop_id
+                    """
+                ),
+                [{"shop_id": shop_id}]
+            ).scalar()
+            
+            if timesSold >= breakpoint:
+                return shop_id
+            else:
+                return "Failed Verification"
+        except Exception as e:
+            print("Error while posting application: ", e)
 
 # Set the status of the given shop_id to Verified (True)
 @router.post("/update_verification")
 def update_verification(shop_id: int, status: bool):
     with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text(
-                """
-                    UPDATE shops
-                    SET verified = :status
-                    WHERE shop_id = :shop_id
-                """
-            ),
-            [{
-                "status": status,
-                "shop_id": shop_id
-            }]
-        )
+        try:
+            connection.execute(
+                sqlalchemy.text(
+                    """
+                        UPDATE shops
+                        SET verified = :status
+                        WHERE shop_id = :shop_id
+                    """
+                ),
+                [{
+                    "status": status,
+                    "shop_id": shop_id
+                }]
+            )
         
-    return "OK"
+            return "OK"
+        except Exception as e:
+            print("Error while updating verification status: ", e)
 
 # Return verification status for a given shop_id
-@router.post("/verification_status")
+@router.get("/verification_status")
 def verification_status(shop_id: int):
     with db.engine.begin() as connection:
-        status = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT verified
-                    FROM shops
-                    WHERE shop_id = :shop_id
-                """
-            ),
-            [{
-                "shop_id": shop_id
-            }]
-        ).scalar()
-        
-        return status
+        try:
+            status = connection.execute(
+                sqlalchemy.text(
+                    """
+                        SELECT verified
+                        FROM shops
+                        WHERE shop_id = :shop_id
+                    """
+                ),
+                [{
+                    "shop_id": shop_id
+                }]
+            ).scalar()
+            
+            return status
+        except Exception as e:
+            print("Error while retrieving verification status: ", e)
+            
+# Flash Sale EPs
+
+@router.get("/start_flash_sale")
+def start_flash_sale(shop_id: int, disCounter: int, priceModifier: float):
+    with db.engine.begin() as connection:
+        try:
+            # update discounter_counter in shops to disCounter
+            connection.execute(
+                sqlalchemy.text(
+                    """
+                        UPDATE shops
+                        SET discounter_counter = :disCounter, price_modifier = :priceModifier
+                        WHERE shop_id = :shop_id
+                    """
+                ),
+                [{
+                    "disCounter": disCounter,
+                    "priceModifier": priceModifier,
+                    "shop_id": shop_id
+                }]
+            )
+            
+            return "Sale started for shop %d for %d shoes at %d%% price.", shop_id, disCounter, (priceModifier * 100)
+        except Exception as e:
+            print("Error while starting flash sale: ", e)

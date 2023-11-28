@@ -316,3 +316,21 @@ Changes email with valid inputs
     "success_msg": "text"
 }
 ```
+
+### 3.8 Start Flash Sale - `/start_flash_sale` (POST)
+
+Starts a flash sale for a particular shop
+```json
+{
+    "shop_id": "int",
+    "disCounter": "int",
+    "priceModifier": "float"
+}
+```
+
+**Returns**:
+```json
+{
+    "success_msg": "text"
+}
+```
