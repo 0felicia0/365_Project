@@ -32,6 +32,7 @@ class colors(str, Enum):
     Pink = "Pink"
     Red = "Red"
     Burgundy = "Burgundy"
+    Other = "Other"
 
 class genders(str, Enum):
     Youth = "Youth"
@@ -54,11 +55,11 @@ def filter(
     condition: condition = "",
     min_price: int = 1,
     max_price: int = "",
-    sort_order: filter_sort_order = filter_sort_order.desc,
+    price_order: filter_sort_order = filter_sort_order.desc,
     shop_id: str = ""
 ):
     order_by = db.listings.c.price
-    if sort_order== filter_sort_order.desc:
+    if price_order== filter_sort_order.desc:
         order_by = order_by.desc()
     else:
         order_by = order_by.asc()
@@ -139,27 +140,34 @@ def filter(
     page_range_lower = page_range_upper-5
     
     ans = []
-    with db.engine.connect() as conn:
-        results = conn.execute(res)
-        
-        i = 1
+    try:
+        with db.engine.connect() as conn:
+            results = conn.execute(res)
+            
+            i = 1
 
-        for row in results:
-            if i>=page_range_lower and i<page_range_upper:
-                result_item = {
-                    "listing_id": row.listing_id,
-                    "quantity": row.total_quantity,
-                    "price": row.price,
-                    "shop id": row.shop_id,
-                    "brand": row.brand,
-                    "color": row.color,
-                    "style": row.style,
-                    "condition": row.condition,
-                    "gender": row.gender
+            for row in results:
+                if i>=page_range_lower and i<page_range_upper:
+                    result_item = {
+                        "listing_id": row.listing_id,
+                        "quantity": row.total_quantity,
+                        "price": row.price,
+                        "shop id": row.shop_id,
+                        "brand": row.brand,
+                        "color": row.color,
+                        "style": row.style,
+                        "condition": row.condition,
+                        "gender": row.gender
 
-                }
-                ans.append(result_item)
-            i = i+1
+                    }
+                    ans.append(result_item)
+                i = i+1
+    except HTTPError as h:
+        return h.msg
+
+    except Exception as e:
+        print("Error in search: ", e)
+
     if ans == [] and search_page==1:
         return "no results, please modify your search"
     elif ans == []:
