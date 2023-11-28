@@ -192,47 +192,76 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
 
 @router.post("/checkout")
 def checkout(cart_id: int):
-    # have to update ledgers, create transaction,
+
+ # have to update ledgers, create transaction,
+
     with db.engine.begin() as connection:
-        description = f"Checkout for cart_id: {cart_id}"
-        tag = "CHECKOUT"
+        try:    
+    
+            res = connection.execute(sqlalchemy.text("""SELECT carts.active FROM carts WHERE carts.cart_id = :cart_id 
+                                            AND carts.active = TRUE"""), {"cart_id": cart_id}).first()
 
-
-        res = connection.execute(sqlalchemy.text("""SELECT cart_items.quantity AS quantity, cart_items.listing_id AS listing_id
-                                                  FROM cart_items WHERE cart_items.cart_id = :cart_id"""), {"cart_id": cart_id})
-        first_row = res.first()
-        quantity = first_row.quantity
-        listing_id = first_row.listing_id
-
-        res = connection.execute(sqlalchemy.text("""SELECT listings.shop_id AS shop_id, listings.price AS balance FROM listings JOIN cart_items 
-                                                 ON listings.listing_id = cart_items.listing_id
-                                                WHERE cart_items.listing_id = :listing_id"""), {"listing_id": listing_id})
-        first_row = res.first()
-        shop_id = first_row.shop_id
-        balance = first_row.balance
-
-        #check if there is enough stock
-        res = connection.execute(sqlalchemy.text("""SELECT SUM(shoe_inventory_ledger.quantity) AS inventory
-                                                  FROM shoe_inventory_ledger WHERE shop_id = :shop_id AND listing_id = :listing_id"""), 
-                                                  {"shop_id": shop_id, "listing_id": listing_id})
-        first_row = res.first()
-        inventory = first_row.inventory
-
-        if inventory >= quantity:
-            res = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description, tag)
-                                            VALUES (:description, :tag) RETURNING id"""),
-                                            {"description": description, "tag": tag})
-        
-            transaction_id = res.fetchone()[0]
-
-            connection.execute(sqlalchemy.text("""INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
-                                            VALUES (:shop_id, :listing_id, :transaction_id, :quantity)"""),
-                                            {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
-
-            connection.execute(sqlalchemy.text("""INSERT INTO shop_balance_ledger (balance, shop_id)
-                                            VALUES (:balance, :shop_id)"""),
-                                            {"balance": balance, "shop_id": shop_id})
+            if res is None:
+                raise HTTPError(url=None, code=400, msg="No active cart found with the given cart_id.", hdrs={}, fp=None)
             
-            return True
-        
-        return False
+
+            description = f"Checkout for cart_id: {cart_id}"
+            tag = "CHECKOUT"
+
+            # SQL query to get cart items with listing information
+
+            cart_items_info = connection.execute(sqlalchemy.text("""
+                SELECT
+                    cart_items.quantity AS quantity,
+                    cart_items.listing_id AS listing_id,
+                    listings.shop_id AS shop_id,
+                    (listings.price * cart_items.quantity) AS balance
+                FROM
+                    cart_items
+                JOIN
+                    listings ON cart_items.listing_id = listings.listing_id
+                WHERE
+                    cart_items.cart_id = :cart_id"""), {"cart_id": cart_id}).fetchall()
+
+            for row in cart_items_info:
+                quantity, listing_id, shop_id, balance = row
+
+                # Check if there is enough stock
+                inventory = connection.execute(sqlalchemy.text("""
+                    SELECT SUM(quantity) AS inventory
+                    FROM shoe_inventory_ledger
+                    WHERE shop_id = :shop_id AND listing_id = :listing_id"""), {"shop_id": shop_id, "listing_id": listing_id}).scalar()
+                if inventory < quantity:
+                    raise IntegrityError("Not enough stock for listing_id {}".format(listing_id), None, None)
+
+                    #---
+                transaction_id = connection.execute(sqlalchemy.text("""
+                    INSERT INTO transactions (description, tag)
+                    VALUES (:description, :tag) RETURNING id"""), {"description": description, "tag": tag}).scalar()
+
+                # Update shoe inventory ledger
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
+                    VALUES (:shop_id, :listing_id, :transaction_id, :quantity)
+                """), {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
+     
+                # Update shop balance ledger
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO shop_balance_ledger (balance, shop_id)
+                    VALUES (:balance, :shop_id)
+                """), {"balance": balance, "shop_id": shop_id})
+                
+            
+            connection.execute(sqlalchemy.text("""
+                UPDATE carts
+                SET active = :active
+                WHERE cart_id = :cart_id"""), {"active": False, "cart_id": cart_id})
+            
+            return {"Cart checkout complete!"}
+                    
+        except Exception as e:
+            connection.execute(sqlalchemy.text("""
+                UPDATE carts
+                SET active = :active
+                WHERE cart_id = :cart_id"""), {"active": False, "cart_id": cart_id})
+            return {"Error during checkout{}".format(str(e))}
