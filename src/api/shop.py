@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+from enum import Enum
 from urllib.error import HTTPError
 
 router = APIRouter(
@@ -76,9 +77,37 @@ def  create_shop(account_id: int, new_shop: NewShop):
         )
     return "OK"
 
+class colors(str, Enum):
+    Black = "Black"
+    Grey = "Grey"
+    White = "White"
+    Ivory = "Ivory"
+    Beige = "Beige"
+    Brown = "Brown"
+    Metallic = "Metallic"
+    Purple = "Purple"
+    Blue = "Blue"
+    Green = "Green"
+    Yellow = "Yellow"
+    Orange = "Orange"
+    Pink = "Pink"
+    Red = "Red"
+    Burgundy = "Burgundy"
+    Other = "Other"
+
+class genders(str, Enum):
+    Youth = "Youth"
+    Women = "Women"
+    Men = "Men"
+    Unisex = "Unisex"
+
+class condition(str, Enum):
+    new = "new"
+    used = "used"
+
 class Shoe(BaseModel):
     brand: str
-    color: str
+    color: colors
     style: str
 
 class Listing(BaseModel):
@@ -86,84 +115,75 @@ class Listing(BaseModel):
     quantity: int
     price:int
     size:int
+    condition: condition
+    gender: genders
 
 @router.post("/create_listing")
 def create_listing(shoe: Shoe, listing: Listing):
-    #for testing purposes
-    print("in create_listing")
-    print("shoe info: ", shoe)
-    print("listing info: ", listing)
-
-    #with db.engine.begin() as connection:
-    with db.engine.connect().execution_options(isolation_level="Serializable") as connection:
-        #create a new transaction
-        
-        description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
-        
-        transaction_id = connection.execute(
-            sqlalchemy.text(
-                """
-                INSERT INTO transactions (description, tag)
-                VALUES(:description, 'LISTING')
-                RETURNING id
-                """
-            ),
-            [{"description": description}])
-        transaction_id = transaction_id.first()[0]
+    try:
+        with db.engine.begin() as connection:
+        #with db.engine.connect().execution_options(isolation_level="Serializable") as connection:
+            #create a new transaction
             
-        #check if shoe is in shoe catalog, if it is, return ID
-        result = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT * FROM shoes
-                WHERE brand = :brand AND color = :color AND style = :style
-                """
-            ), [{"brand": shoe.brand, "color": shoe.color, "style": shoe.style}]
-        )
-
-        row = result.fetchone()
-
-        if row:
-            shoe_id = row[0]
-        else: 
-            #if shoe isn't in catalog, add it, return ID
+            description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
+            
+            transaction_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    INSERT INTO transactions (description, tag)
+                    VALUES(:description, 'LISTING')
+                    RETURNING id
+                    """
+                ),
+                [{"description": description}])
+            transaction_id = transaction_id.first()[0]
+                
             shoe_id = connection.execute(
                 sqlalchemy.text(
                     """
                     INSERT INTO shoes (brand, color, style, transaction_id)
                     VALUES (:brand, :color, :style, :transaction_id)
+                    ON CONFLICT (brand, color, style)
+                    DO UPDATE SET (brand, color, style, transaction_id) = 
+                        (:brand, :color, :style, :transaction_id)
                     RETURNING shoe_id
                     """
                 ),
                 [{"brand": shoe.brand, "color": shoe.color, "style": shoe.style, "transaction_id": transaction_id}]
+            ).fetchone()[0]
+            
+            #insert listing into table
+            listing_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id, gender, condition)
+                    VALUES (:shop_id, :shoe_id, :price, :size, :transaction_id, :gender, :condition)
+                    RETURNING listing_id
+                    """    
+                ),
+                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": listing.price, "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
             )
-            shoe_id = shoe_id.fetchone()[0]
-        
-        #insert listing into table
-        listing_id = connection.execute(
-            sqlalchemy.text(
-                """
-                INSERT INTO listings (shop_id, shoe_id, price, size, transaction_id)
-                VALUES (:shop_id, :shoe_id, :price, :size, :transaction_id)
-                RETURNING listing_id
-                """    
-            ),
-            [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "quantity": listing.quantity, "price": listing.price, "size": listing.size, "transaction_id": transaction_id}]
-        )
-        listing_id = listing_id.fetchone()[0]
-        #update shoe_inventory ledger
-        connection.execute(
-            sqlalchemy.text(
-                """
-                INSERT into shoe_inventory_ledger(shop_id, listing_id, transaction_id, quantity)
-                VALUES (:shop_id, :listing_id, :transaction_id, :quantity )
-                """
-            ),
-            [{"shop_id": listing.shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": listing.quantity}]
-        )
-
-        return "OK"
+            listing_id = listing_id.fetchone()[0]
+            
+            #update shoe_inventory ledger
+            connection.execute(
+                sqlalchemy.text(
+                    """
+                    INSERT into shoe_inventory_ledger(shop_id, listing_id, transaction_id, quantity)
+                    VALUES (:shop_id, :listing_id, :transaction_id, :quantity )
+                    """
+                ),
+                [{"shop_id": listing.shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": listing.quantity}]
+            )
+            
+            return "successfully created listing"
     
+    except HTTPError as h:
+        return h.msg
+
+    except Exception as e:
+        print("Error creating listing: ", e)
+
 # Verification EPs
 @router.post("/post_application")
 
