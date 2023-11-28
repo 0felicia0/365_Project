@@ -94,7 +94,8 @@ def create_listing(shoe: Shoe, listing: Listing):
     print("shoe info: ", shoe)
     print("listing info: ", listing)
 
-    with db.engine.begin() as connection:
+    #with db.engine.begin() as connection:
+    with db.engine.connect().execution_options(isolation_level="Serializable") as connection:
         #create a new transaction
         
         description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
@@ -109,10 +110,7 @@ def create_listing(shoe: Shoe, listing: Listing):
             ),
             [{"description": description}])
         transaction_id = transaction_id.first()[0]
-        
-        
-        
-        
+            
         #check if shoe is in shoe catalog, if it is, return ID
         result = connection.execute(
             sqlalchemy.text(
