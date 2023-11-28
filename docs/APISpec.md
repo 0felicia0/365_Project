@@ -94,9 +94,7 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
-  "cart_id": "integer"
-  "payment": "string",
-  "gold_paid": "integer"
+	"cart_id": "integer"
 }
 ```
 
@@ -104,7 +102,7 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
-    "success": "boolean"
+    "success_msg": "text"
 }
 ```
 
