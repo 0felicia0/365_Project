@@ -15,6 +15,9 @@ an example of a phantom read.
 
 Explain the process of checking out, any relevant details, and steps involved.
 
+<img width="450" alt="Screenshot 2023-11-28 at 4 16 54 PM" src="https://github.com/0felicia0/Shoetopia/assets/102556938/68cad6f2-f018-4746-83b2-c3bad7a3db05">
+
+
 ## 3. Users/Create_account
 
 Another area of potential concurrency issues is create_account. In the rare case where two people are trying to create an account using the 
