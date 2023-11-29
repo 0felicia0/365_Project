@@ -6,7 +6,7 @@ Create_listing poses potential concurrency concerns. In our database schema, sho
 If a shoe does not yet exist, it is added to the database and a listing is made using the shoe_id. This creates an issue as two shops could
 potentially create a listing for identical shoes at the same time, resulting in a shoe being in the database twice rather than once.
 We protect against this issue by having our read and write in one SQL statement. So, when we check if something is already in the database
-we are executing the write feature in that statment. We achieved this using ON CONFLICT to determine whether or not we will be writing.This is
+we are executing the write feature in that statment. We achieved this using ON CONFLICT to determine whether or not we will be writing. This is
 an example of a phantom read.
 
 ![image](https://github.com/0felicia0/Shoetopia/assets/97004682/38bcd26a-0185-4a4c-aee7-3fb12c0b0f9c)
@@ -17,7 +17,8 @@ Checking out during a flash sale can cause a lost update concurrency issue. When
 For example, the first ten customers can get a discount.
 T1 is the tenth customer to enter checkout and T2 is the next one after that.
 If T1 is in checkout and is in the middle of checking the inventory, T2 can potnetially checkout in the meantime. This now makes the T1 ineligible for the discount.
-But, the process still carries out as if it is a valid purchase with a discount. 
+But, the process still carries out as if it is a valid purchase with a discount.
+To prevent this, we implemented a ledger to track how many eligible discounts are available. We also have this in place for tracking shoe inventory for additional protection.
 
 <img width="450" alt="Screenshot 2023-11-28 at 4 16 54 PM" src="https://github.com/0felicia0/Shoetopia/assets/102556938/68cad6f2-f018-4746-83b2-c3bad7a3db05">
 
