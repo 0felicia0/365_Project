@@ -172,21 +172,6 @@ def checkout(cart_id: int):
                     FROM shoe_inventory_ledger
                     WHERE shop_id = :shop_id AND listing_id = :listing_id"""), {"shop_id": shop_id, "listing_id": listing_id}).scalar()
                 
-                if inventory < quantity:
-                    raise IntegrityError("Not enough stock for listing_id {}".format(listing_id), None, None)
-
-                    #---
-                transaction_id = connection.execute(sqlalchemy.text("""
-                    INSERT INTO transactions (description, tag)
-                    VALUES (:description, :tag) RETURNING id"""), {"description": description, "tag": tag}).scalar()
-
-                # Update shoe inventory ledger
-                connection.execute(sqlalchemy.text("""
-                    INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
-                    VALUES (:shop_id, :listing_id, :transaction_id, :quantity)
-                """), {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
-     
-                
                 # retrieve sale_start
                 saleInfo = connection.execute(sqlalchemy.text(
                     """
@@ -218,11 +203,12 @@ def checkout(cart_id: int):
                                        "startTime": saleInfo[2]
                                    }]
                                    ).scalar()
-                
+                if amtDiscounted is None:
+                    amtDiscounted = 0
                 amtDiscounted = abs(amtDiscounted)
                 if amtDiscounted < saleInfo.discount_counter:
                 # if sale, check remaining discounted sales and compare to shoes
-                    discPrice = price * saleInfo.price_percentage
+                    discPrice = price * saleInfo.price_percentage / 100
                     discountsLeft =  saleInfo.discount_counter - amtDiscounted
                     
                     # 3 shoes to buy, 5 discounts left
@@ -237,6 +223,20 @@ def checkout(cart_id: int):
                     balance += quantity * price
                 
                 balance = int(balance)
+                
+                if inventory < quantity:
+                    raise IntegrityError("Not enough stock for listing_id {}".format(listing_id), None, None)
+
+                    #---
+                transaction_id = connection.execute(sqlalchemy.text("""
+                    INSERT INTO transactions (description, tag)
+                    VALUES (:description, :tag) RETURNING id"""), {"description": description, "tag": tag}).scalar()
+
+                # Update shoe inventory ledger
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO shoe_inventory_ledger (shop_id, listing_id, transaction_id, quantity)
+                    VALUES (:shop_id, :listing_id, :transaction_id, :quantity)
+                """), {"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": -quantity})
                 
                 # Update shop balance ledger
                 connection.execute(sqlalchemy.text("""
