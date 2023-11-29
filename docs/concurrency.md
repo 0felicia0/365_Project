@@ -11,9 +11,13 @@ an example of a phantom read.
 
 ![image](https://github.com/0felicia0/Shoetopia/assets/97004682/38bcd26a-0185-4a4c-aee7-3fb12c0b0f9c)
 
-## 2. Checkout
+## 2. Flash Sale with Checkout
 
-Explain the process of checking out, any relevant details, and steps involved.
+Checking out during a flash sale can cause a lost update concurrency issue. When a shop has a flash sale, only a limited number of customers can take adavntage of the sale.
+For example, the first ten customers can get a discount.
+T1 is the tenth customer to enter checkout and T2 is the next one after that.
+If T1 is in checkout and is in the middle of checking the inventory, T2 can potnetially checkout in the meantime. This now makes the T1 ineligible for the discount.
+But, the process still carries out as if it is a valid purchase with a discount. 
 
 <img width="450" alt="Screenshot 2023-11-28 at 4 16 54 PM" src="https://github.com/0felicia0/Shoetopia/assets/102556938/68cad6f2-f018-4746-83b2-c3bad7a3db05">
 
