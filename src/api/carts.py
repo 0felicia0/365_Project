@@ -125,9 +125,14 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
     except Exception as e:
         print("Error in the process of adding an item to a cart: ", e)
 
+class Payment(BaseModel):
+    name: str
+    credit_card: str
+    exp_date: str
+    security_code: int
 
 @router.post("/checkout")
-def checkout(cart_id: int):
+def checkout(cart_id: int, payment: Payment):
 
  # have to update ledgers, create transaction,
 
