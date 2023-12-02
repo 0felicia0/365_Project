@@ -8,11 +8,7 @@ def database_connection_url():
     dotenv.load_dotenv()
 
 
-    # DB_USER = os.environ.get("POSTGRES_USER", "postgres")
-    # DB_PASSWD = os.environ.get("POSTGRES_PASSWORD", "postgres")
-    # DB_SERVER = os.environ.get("POSTGRES_SERVER", "127.0.0.1")
-    # DB_PORT = os.environ.get("POSTGRES_PORT", 54322)
-    # DB_NAME = os.environ.get("POSTGRES_DB", "postgres")
+    
     return os.environ.get("POSTGRES_URI")
     #return f"postgresql://{DB_USER}:{DB_PASSWD}@{DB_SERVER}:{DB_PORT}/{DB_NAME}"
 
