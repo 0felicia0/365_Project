@@ -28,7 +28,7 @@ create table
     size integer not null,
     transaction_id bigint not null,
     condition text not null,
-    age / gender text not null,
+    gender text not null,
     constraint test - listings_pkey primary key (listing_id),
     constraint listings_shoe_id_fkey foreign key (shoe_id) references shoes (shoe_id),
     constraint listings_shop_id_fkey foreign key (shop_id) references shops (shop_id),
@@ -59,8 +59,8 @@ create table
     created_at timestamp with time zone not null default now(),
     transaction_id bigint not null,
     constraint test - shoes_pkey primary key (shoe_id),
+    constraint unique_brand_color_style unique (brand, color, style),
     constraint shoes_transaction_id_fkey foreign key (transaction_id) references transactions (id)
-    constraint unique_brand_color_style unique(brand, color, style)
   ) tablespace pg_default;
 
 create table
@@ -79,10 +79,16 @@ create table
     user_id bigint not null,
     store_name text not null,
     created_at timestamp with time zone not null default now(),
-    verified boolean null default false,
+    verified boolean not null default false,
+    discount_counter integer not null default 0,
+    sale_start timestamp with time zone not null default now(),
+    price_percentage integer not null default 100,
+    promotion_tier integer not null default 0,
     constraint shops_pkey primary key (shop_id),
     constraint shops_seller_id_key unique (user_id),
-    constraint shops_shop_id_key unique (shop_id)
+    constraint shops_shop_id_key unique (shop_id),
+    constraint shops_store_name_key unique (store_name),
+    constraint shops_price_percentage_check check ((price_percentage <= 100))
   ) tablespace pg_default;
 
 create table
@@ -102,8 +108,7 @@ create table
     password text not null,
     created_at timestamp with time zone not null default now(),
     constraint users_pkey primary key (user_id),
-    constraint users_email_key unique (email),
-    constraint users_password_key unique (password)
+    constraint users_email_key unique (email)
   ) tablespace pg_default;
 
 -- insert statements for initial population
