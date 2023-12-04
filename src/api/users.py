@@ -144,3 +144,59 @@ def change_email(email: str, password: str, new_email: str):
 
     except Exception as e:
          print("Error in the process of changing password: ", e)
+         
+@router.post("/submit_review")
+def submit_review(user_id: int, shop_id: int, rating: int):
+    try:
+        with db.engine.begin() as connection:
+        # check valid user
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT user_id
+                                                    FROM users
+                                                    WHERE user_id = :user_id
+                                                    """)
+                                                    , {"user_id": user_id}).first()
+            if result is None:
+                raise Exception("Invalid user for submitting review.")
+        # check valid shop
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for submitting review.")
+        # check valid rating
+            if rating < 1 or rating > 5:
+                raise Exception("Invalid rating value.")
+            
+        # # check that user bought from the certain shop
+        #     records = connection.execute(sqlalchemy.text("""
+        #                                             SELECT carts.user_id, shop_inventory_ledger.shop_id
+        #                                             FROM cart_items
+        #                                             LEFT JOIN carts on carts.cart_id = cart_items.id
+        #                                             LEFT JOIN listings on listings.listing_id = cart_items.listing_id
+        #                                             LEFT JOIN shop_inventory_ledger on shop_inventory_ledger.shop_id = listings.shop_id
+        #                                             WHERE carts.user_id = :user_id AND shop_inventory_ledger.shop_id = :shop_id
+        #                                             """),
+        #                                  [{
+        #                                      "user_id": user_id,
+        #                                      "shop_id": shop_id
+        #                                  }])
+        #     if records is None:
+                
+        # post review
+            connection.execute(sqlalchemy.text("""
+                            INSERT INTO shop_rating_ledger (shop_id, user_id, rating)
+                            VALUES (:shop_id, :user_id, :rating)
+                               """), [{
+                                   "shop_id": shop_id,
+                                   "user_id": user_id,
+                                   "rating": rating
+                               }])
+            
+            return ("Submitted rating of %d for shop id %d." % (rating, shop_id))
+        
+    except Exception as e:
+        print("Error in the process of submitting review: ", e)

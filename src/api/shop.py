@@ -230,10 +230,32 @@ def create_listing(shoe: Shoe, listing: Listing):
 # If more than X shoes sold, return shop_id to send to update_verification
 def post_application(shop_id: int):
     # arbitrary number
-    breakpoint = 5
+    sellingBP = 5
+    ratingBP = 4
+    numRatingBP = 5
     
     with db.engine.begin() as connection:
         try:
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for posting application.")
+            #  
+            score = connection.execute(sqlalchemy.text(
+                """
+                    SELECT AVG(rating) as avgRating, COUNT(*) as numRatings
+                    FROM shop_rating_ledger
+                    WHERE shop_id = :shop_id
+                    GROUP BY shop_id
+                """
+            ), [{
+                "shop_id": shop_id
+            }]).first()
+            
             timesSold = connection.execute(
                 sqlalchemy.text(
                     """
@@ -245,12 +267,17 @@ def post_application(shop_id: int):
                 ),
                 [{"shop_id": shop_id}]
             ).first()
-            if timesSold is None:
-                raise Exception("Invalid shop id for posting application.")
-            if timesSold.sold >= breakpoint:
-                return timesSold.shop_id
+            
+            if timesSold.sold >= sellingBP:
+                if score.avgRating >= ratingBP:
+                    if score.numRatings >= numRatingBP:
+                        return timesSold.shop_id
+                    else:
+                        return "Failed Verification: Insufficient number of ratings."
+                else:
+                    return "Failed Verification: Insufficient overall rating."
             else:
-                return "Failed Verification"
+                return "Failed Verification: Insufficient number of shoes sold."
         except Exception as e:
             print("Error while posting application:", e)
 
