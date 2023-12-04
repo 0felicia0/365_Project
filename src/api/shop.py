@@ -192,7 +192,7 @@ def post_application(shop_id: int):
                 [{"shop_id": shop_id}]
             ).first()
             if timesSold is None:
-                raise Exception("Invalid shop id.")
+                raise Exception("Invalid shop id for posting application.")
             if timesSold.sold >= breakpoint:
                 return timesSold.shop_id
             else:
@@ -221,7 +221,7 @@ def update_verification(shop_id: int, status: bool):
             ).scalar()
             
             if id is None:
-                raise Exception("Invalid shop id.")
+                raise Exception("Invalid shop id for updating verification.")
             
             return id
         except Exception as e:
@@ -245,7 +245,7 @@ def verification_status(shop_id: int):
                 }]
             ).scalar()
             if status is None:
-                raise Exception("Invalid shop id.")
+                raise Exception("Invalid shop id for retrieving verifcation status.")
             return status
         except Exception as e:
             print("Error while retrieving verification status:", e)
@@ -273,7 +273,7 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
                     }]
                 ).first()
             if saleInfo is None:
-                    raise Exception("Invalid shop id.")
+                    raise Exception("Invalid shop id for starting flash sale.")
 
             # retrieve amount discounted
             discountInfo = connection.execute(sqlalchemy.text(

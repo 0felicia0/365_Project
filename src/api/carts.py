@@ -242,7 +242,7 @@ def checkout(cart_id: int):
                 connection.execute(sqlalchemy.text("""
                     INSERT INTO shop_balance_ledger (balance, shop_id)
                     VALUES (:balance, :shop_id)
-                """), {"balance": balance, "shop_id": shop_id})
+                """), {"balance": balance * 100, "shop_id": shop_id})
                 
             
             connection.execute(sqlalchemy.text("""
