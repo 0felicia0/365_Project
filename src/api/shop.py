@@ -76,7 +76,7 @@ class Payment(BaseModel):
 
 # apply boost to all shoes, or something else??
 # would be cool to turn into a subscription based promotional feature
-@router.put("/{shop_id}/payment/{payment}/purchase_promotion_tier")
+@router.put("/{shop_id}/purchase_promotion_tier")
 def purchase_promotion_tier(shop_id: int, requested_tier: PromotionTiers, payment: Payment):
     t = 0
     if requested_tier == PromotionTiers.Tier1:
