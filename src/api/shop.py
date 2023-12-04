@@ -62,6 +62,60 @@ def  create_shop(account_id: int, new_shop: NewShop):
     except Exception as e:
         return {f"Error in creating a shop: {e}"}
 
+# For shops to purchase a promotion tier to boost their listings
+class PromotionTiers(str, Enum):
+    Tier1 = "Tier1" #500
+    Tier2 = "Tier2" #750
+    Tier3 = "Tier3" #1000
+
+class Payment(BaseModel):
+    name: str
+    credit_card: str
+    exp_date: str
+    security_code: int
+
+# apply boost to all shoes, or something else??
+# would be cool to turn into a subscription based promotional feature
+@router.put("/{shop_id}/payment/{payment}/purchase_promotion_tier")
+def purchase_promotion_tier(shop_id: int, requested_tier: PromotionTiers, payment: Payment):
+    t = 0
+    if requested_tier == PromotionTiers.Tier1:
+        t = 1
+    elif requested_tier == PromotionTiers.Tier2:
+        t = 2
+    elif requested_tier == PromotionTiers.Tier3:
+        t = 3
+    
+    try: 
+        # check if payment is valid
+
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("""
+                                                        SELECT shops.shop_id
+                                                        FROM shops
+                                                        WHERE shops.shop_id = :shop_id
+                                                        """), {"shop_id": shop_id}).first()
+            # shop does not exist
+            if result is None:
+                raise ValueError("No shop exists with given shop_id. Cannot purchase a promotion tier")
+            
+            # check if the promotion is already applied -> can only increase, cannot decrease tier (no point)
+            # set the promotion value to tier requested
+            result = connection.execute(sqlalchemy.text("""
+                                                UPDATE shops
+                                                SET promotion_tier = :t
+                                                WHERE shop_id = :shop_id and :t > promotion_tier
+                                                RETURNING 1
+                                                """), {"t": t, "shop_id": shop_id}).fetchone()
+            
+            if result:
+                return {"Promotional tier successfully purchased and applied!"}
+            else:
+                return {"The current promotional tier applied to the shop is already greater than or equal to the one you want to purchase."}
+            
+        
+    except Exception as e:
+        return {f"Error in purchasing a promotion tier: {e}"}
 
 class colors(str, Enum):
     Black = "Black"
