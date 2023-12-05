@@ -214,6 +214,8 @@ def post_applications(num_shops):
     with engine.begin() as connection:
         for i in range(num_shops):
             res = post_application(i)
+            if res is None:
+                continue
             if res.isdigit():
                 update_verification(i, True)
         
@@ -251,9 +253,7 @@ def post_application(shop_id: int):
     ratingBP = 3
     numRatingBP = 5
     
-    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
-
-    with engine.begin() as connection:
+    with db.engine.begin() as connection:
         try:
             result = connection.execute(sqlalchemy.text("""
                                                     SELECT shop_id
@@ -266,7 +266,7 @@ def post_application(shop_id: int):
             #  
             score = connection.execute(sqlalchemy.text(
                 """
-                    SELECT AVG(rating) as avgRating, COUNT(*) as numRatings
+                    SELECT AVG(rating)::int AS avgRatings, COUNT(*) AS numRatings
                     FROM shop_rating_ledger
                     WHERE shop_id = :shop_id
                     GROUP BY shop_id
@@ -274,6 +274,8 @@ def post_application(shop_id: int):
             ), [{
                 "shop_id": shop_id
             }]).first()
+            avgRating = score[0]
+            numRatings = score[1]
             
             timesSold = connection.execute(
                 sqlalchemy.text(
@@ -286,11 +288,16 @@ def post_application(shop_id: int):
                 ),
                 [{"shop_id": shop_id}]
             ).first()
-            
-            if timesSold.sold >= sellingBP:
-                if score.avgRating >= ratingBP:
-                    if score.numRatings >= numRatingBP:
-                        return timesSold.shop_id
+            if timesSold is None:
+                sold = 0
+                id = 0
+            else:
+                sold = timesSold.sold
+                id = timesSold.shop_id
+            if sold >= sellingBP:
+                if avgRating >= ratingBP:
+                    if numRatings >= numRatingBP:
+                        return id
                     else:
                         return "Failed Verification: Insufficient number of ratings."
                 else:
