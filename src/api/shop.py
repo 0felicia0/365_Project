@@ -161,21 +161,29 @@ class Listing(BaseModel):
 
 @router.post("/create_listing")
 def create_listing(shoe: Shoe, listing: Listing):
-    if listing.quantity<=0:
-        raise HTTPError(
-            url=None,
-            code=400,
-            msg="Quantity must be greater than zero. Please try agian.",
-            hdrs={},
-            fp=None
-        )
+    #all of these errors show a 500 error in supabase, prints error message in terminal
+    #we want the error message in supabase
     
+    if listing.quantity<=0:
+        raise Exception("Invalid shop for posting application.")
+    if listing.price<=0:
+        raise Exception("Invlaid price for listing. Values must be greater than 0")
+    if listing.size<=0:
+        raise Exception("Invlaid size for listing. Sizes cannot be zero or negative.\nFor proper functionality we recommend using US sizing") 
     try:
         shoe.brand = shoe.brand.lower()
         shoe.style = shoe.style.lower()
         with db.engine.begin() as connection:
         #with db.engine.connect().execution_options(isolation_level="Serializable") as connection:
             #create a new transaction
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": listing.shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for posting application.")
             
             description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
             
