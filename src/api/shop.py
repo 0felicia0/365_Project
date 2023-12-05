@@ -160,6 +160,15 @@ class Listing(BaseModel):
 
 @router.post("/create_listing")
 def create_listing(shoe: Shoe, listing: Listing):
+    if listing.quantity<=0:
+        raise HTTPError(
+            url=None,
+            code=400,
+            msg="Quantity must be greater than zero. Please try agian.",
+            hdrs={},
+            fp=None
+        )
+    
     try:
         shoe.brand = shoe.brand.lower()
         shoe.style = shoe.style.lower()
