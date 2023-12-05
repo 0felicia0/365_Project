@@ -247,7 +247,7 @@ def post_application(shop_id: int):
             #  
             score = connection.execute(sqlalchemy.text(
                 """
-                    SELECT AVG(rating) as avgRating, COUNT(*) as numRatings
+                    SELECT AVG(rating)::int AS avgRatings, COUNT(*) AS numRatings
                     FROM shop_rating_ledger
                     WHERE shop_id = :shop_id
                     GROUP BY shop_id
@@ -255,6 +255,8 @@ def post_application(shop_id: int):
             ), [{
                 "shop_id": shop_id
             }]).first()
+            avgRating = score[0]
+            numRatings = score[1]
             
             timesSold = connection.execute(
                 sqlalchemy.text(
@@ -274,8 +276,8 @@ def post_application(shop_id: int):
                 sold = timesSold.sold
                 id = timesSold.shop_id
             if sold >= sellingBP:
-                if score.avgRating >= ratingBP:
-                    if score.numRatings >= numRatingBP:
+                if avgRating >= ratingBP:
+                    if numRatings >= numRatingBP:
                         return id
                     else:
                         return "Failed Verification: Insufficient number of ratings."
