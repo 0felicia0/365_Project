@@ -2,9 +2,9 @@
 
 ###Code Review
 1. For both create_account and create_shop, I think just for the sake of clarity when testing, it might be better to return the account id that was created instead of just "ok." This way if you don't have access to the database you can still follow the flow of that specific account/shop id. 
-	- We implemented this feedback
-For create_shop, I would first check to make sure that the shop name isn't already in the database, so that way two sellers won't have the same shop name.
-We implemented this feedback
+	- We implemented this feedback.
+2. For create_shop, I would first check to make sure that the shop name isn't already in the database, so that way two sellers won't have the same shop name.
+	- We implemented this feedback.
 Similarly to the one above, for create_account, I would add a check to make sure that the email that's passed in isn't already in the users table, so that way it's not possible to have multiple accounts under the same email.
 We implemented this feedback
 With the search function, it might be better to have it output a string representing the shoe instead of just the listing_id, otherwise it's kind of hard to see what shoe is actually for sale.
