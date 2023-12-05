@@ -5,53 +5,53 @@
 	- We implemented this feedback.
 2. For create_shop, I would first check to make sure that the shop name isn't already in the database, so that way two sellers won't have the same shop name.
 	- We implemented this feedback.
-Similarly to the one above, for create_account, I would add a check to make sure that the email that's passed in isn't already in the users table, so that way it's not possible to have multiple accounts under the same email.
-We implemented this feedback
-With the search function, it might be better to have it output a string representing the shoe instead of just the listing_id, otherwise it's kind of hard to see what shoe is actually for sale.
-We implemented this feedback and now return additional information in search.
-In addition to making search clearer, we added a compare endpoint so we can isolate the two listings we are looking at.
-This is kind of trivial since it's not an actual shop, but right now carts_checkout doesn't have a way for customers to pay. With the potion shop there was a payment string, so maybe you could add that as well.
-We implemented this feedback
-In create_listing, there isn't any error handling, so even if a transaction fails, it still returns "ok." This can be pretty easily fixed though with a try, except clause.
-We implemented this feedback.
-Similarly, create shop and create account return "ok" no matter what, so maybe consider adding more error handling in case something fails.
-We implemented this feedback
-I saw this when testing, but it doesn't look like the search list is updated when a shoe is bought. I bought a pair of shoes, but then when I ran the search function again, the shoe was still there. I think it's because the search function is looking at the original quantity that was entered when the seller put in the shoe, but then the quantity is continuously changed through the ledger (everything works during checkout).
-We implemented this feedback
-Also, since the quantity of a certain shoe is maintained in a ledger based system, there should be a check in the search function that sums the quantity and if the quantity is zero then it shouldn't be added to the return list.
-We implemented this feedback.
-For checkout, this also isn't super necessary, but instead of returning false if the inventory isn't enough, it might be better to return "insufficient inventory," or something like that, so that way it's more clear for the customer why their transaction didn't go through.
-We implemented this feedback.
-In create_cart, if you put in an account_id that doesn't exist, it will return an Internal Server Error, so it might be good to check first to see if it exists, or use a try/except statement.
-We implemented this feedback
-Similarly to the one above, in set_item_quantity, if you put a non-existent listing id, it'll cause an Internal Server Error. So it might be good to add more extensive error handling so instead of just saying Internal Server Error, it'll explain what went wrong.
-We implemented this feedback
-I'm not quite sure how to test this since the search function doesn't update, but I think that if someone has multiple items in their cart it will only checkout the first item since .first() is called, instead of doing something like for row in res:
-We implemented this feedback
+3. Similarly to the one above, for create_account, I would add a check to make sure that the email that's passed in isn't already in the users table, so that way it's not possible to have multiple accounts under the same email.
+	- We implemented this feedback
+4. With the search function, it might be better to have it output a string representing the shoe instead of just the listing_id, otherwise it's kind of hard to see what shoe is actually for sale.
+	- We implemented this feedback and now return additional information in search.
+	- In addition to making search clearer, we added a compare endpoint so we can isolate the two listings we are looking at.
+5. This is kind of trivial since it's not an actual shop, but right now carts_checkout doesn't have a way for customers to pay. With the potion shop there was a payment string, so maybe you could add that as well.
+	- We implemented this feedback
+6. In create_listing, there isn't any error handling, so even if a transaction fails, it still returns "ok." This can be pretty easily fixed though with a try, except clause.
+	- We implemented this feedback.
+7. Similarly, create shop and create account return "ok" no matter what, so maybe consider adding more error handling in case something fails.
+	- We implemented this feedback
+8. I saw this when testing, but it doesn't look like the search list is updated when a shoe is bought. I bought a pair of shoes, but then when I ran the search function again, the shoe was still there. I think it's because the search function is looking at the original quantity that was entered when the seller put in the shoe, but then the quantity is continuously changed through the ledger (everything works during checkout).
+	- We implemented this feedback
+9. Also, since the quantity of a certain shoe is maintained in a ledger based system, there should be a check in the search function that sums the quantity and if the quantity is zero then it shouldn't be added to the return list.
+	- We implemented this feedback
+10. For checkout, this also isn't super necessary, but instead of returning false if the inventory isn't enough, it might be better to return "insufficient inventory," or something like that, so that way it's more clear for the customer why their transaction didn't go through.
+	- We implemented this feedback
+11. In create_cart, if you put in an account_id that doesn't exist, it will return an Internal Server Error, so it might be good to check first to see if it exists, or use a try/except statement.
+	- We implemented this feedback
+12. Similarly to the one above, in set_item_quantity, if you put a non-existent listing id, it'll cause an Internal Server Error. So it might be good to add more extensive error handling so instead of just saying Internal Server Error, it'll explain what went wrong.
+	- We implemented this feedback
+13. I'm not quite sure how to test this since the search function doesn't update, but I think that if someone has multiple items in their cart it will only checkout the first item since .first() is called, instead of doing something like for row in res:
+	- We implemented this feedback
 
 ###Schema/API
 For style in your api spec, you say it should be constrained to options such as "high tops, low, mid, etc," but right now a user could type in anything, so it might help to add an enum to the database so they'll be forced to choose.
 We did not do this because there are many possible styles of shoes. Our database takes in any types of shoes so there are many possibilities for what could be implemented, therefore we determined an Enum would not be reasonable for this portion.
 Similarly, I think some other fields like color could be changed to an enum, just so it's more restrictive.
-We implemented this feedback. 
+	- We implemented this feedback 
 It could be good to implement a function that gets all listings for a specific store or add a store field to the search function so if a customer has a specific store that they know and trust, they can look to see what the store offers.
 We implemented this feedback as part of a search rather than its own function.
 For simplicity's sake, this might be unnecessary, but to fit your design, there are a couple fields whose data types could change. The main one being size could be a float instead, so that way people can sell shoes that are, for example, size eight and a half.
-We implemented this feedback
+	- We implemented this feedback
 For store verification, it might be good to implement the ratings/review system, so that way only stores that have good reviews and ratings can be verified, regardless of how many shoes they have sold.
-We implemented this feedback
+	- We implemented this feedback
 Maybe you could add a "condition" parameter to the listing so customers could know whether the shoe is used, new, lightly worn, or etc.
-We implemented this feedback.
+	- We implemented this feedback
 I think this is just a matter of preference, but the endpoint paths could contain more information about the transaction taking place. For example, in the set quantity function, instead of "set_item_quantity", it could be "/{cart_id}/listing/{listing_id}."
-We implemented this feedback.
+	- We implemented this feedback
 I would consider maybe automating the verification of stores, so maybe after a customer has purchased a shoe/left a rating, it would check to see if it meets the qualifications for verification. That way the administrators wouldn't have to do it by hand.
-We did not implement this feedback, as it would waste resources and time as our shop scales to check if a shop meets a verification. We approached this from the perspective of Instagram verification, where users can apply for the status rather than being automatically awarded. 
+	- We did not implement this feedback, as it would waste resources and time as our shop scales to check if a shop meets a verification. We approached this from the perspective of Instagram verification, where users can apply for the status rather than being automatically awarded. 
 In the search function, in the array of listings, it might be nice to add whether or not the store that is selling it is verified or not.
-We implemented this feedback
+	- We implemented this feedback
 This is just a suggestion, but the functions could be broken up into different files, perhaps the search function could go into it's own file, since I'm not sure if it really matches the purpose of the other functions in carts.py.
-We implemented this feedback
+	- We implemented this feedback
 Similarly to the one above, I think the filter endpoint should probably be something like "/filter" instead of "/carts/filter" since it doesn't really have anything to do with carts.
-We implemented this feedback
+	- We implemented this feedback
 Perhaps consider having it so the filter endpoint doesn't need the API key since it's a function that doesn't really need proper authorization and should be available for all customers to access.
 
 
@@ -59,10 +59,10 @@ Perhaps consider having it so the filter endpoint doesn't need the API key since
 ###Suggestions
 Suggestion 1: Store Discounts
 It would be cool if sellers could decide to offer a store wide discount, where all of the listings that they offer are marked down by however much they decide and for however long they want the sale to go on for. This wouldn't require any database additions, just a new endpoint that would update the listings table. This could also work well with the filter endpoint, if there was an option so that users could only see shoes that are currently on sale.
-	We implemented this feedback with a flash sale feature
+	- We implemented this feedback
 Suggestion 2: Promoted Shoes
 If sellers want to promote their shoes, they could pay a small fee, and then when a customer uses the search function, that shoe will be displayed first, as long as it matches the criteria. This would require a small database change, which would probably just be a boolean in the listing table that says whether or not it has been promoted. Additionally this would require a new endpoint that would take in payment and the listing_id of the promoted shoe.
-	We implemented this feedback with a promotional tier a shop can purchase
+	- We implemented this feedback
 
 
 Jin Wu
