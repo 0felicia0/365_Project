@@ -131,7 +131,7 @@ class Payment(BaseModel):
     exp_date: str
     security_code: int
 
-@router.post("/checkout")
+@router.post("/cart_id/{cart_id}/checkout")
 def checkout(cart_id: int, payment: Payment):
 
  # have to update ledgers, create transaction,
