@@ -201,7 +201,7 @@ def create_listing(shoe: Shoe, listing: Listing):
                     RETURNING listing_id
                     """    
                 ),
-                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": listing.price, "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
+                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": listing.price * 100, "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
             )
             listing_id = listing_id.fetchone()[0]
             
@@ -230,10 +230,34 @@ def create_listing(shoe: Shoe, listing: Listing):
 # If more than X shoes sold, return shop_id to send to update_verification
 def post_application(shop_id: int):
     # arbitrary number
-    breakpoint = 5
+    sellingBP = 5
+    ratingBP = 3
+    numRatingBP = 5
     
     with db.engine.begin() as connection:
         try:
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for posting application.")
+            #  
+            score = connection.execute(sqlalchemy.text(
+                """
+                    SELECT AVG(rating)::int AS avgRatings, COUNT(*) AS numRatings
+                    FROM shop_rating_ledger
+                    WHERE shop_id = :shop_id
+                    GROUP BY shop_id
+                """
+            ), [{
+                "shop_id": shop_id
+            }]).first()
+            avgRating = score[0]
+            numRatings = score[1]
+            
             timesSold = connection.execute(
                 sqlalchemy.text(
                     """
@@ -246,11 +270,21 @@ def post_application(shop_id: int):
                 [{"shop_id": shop_id}]
             ).first()
             if timesSold is None:
-                raise Exception("Invalid shop id.")
-            if timesSold.sold >= breakpoint:
-                return timesSold.shop_id
+                sold = 0
+                id = 0
             else:
-                return "Failed Verification"
+                sold = timesSold.sold
+                id = timesSold.shop_id
+            if sold >= sellingBP:
+                if avgRating >= ratingBP:
+                    if numRatings >= numRatingBP:
+                        return id
+                    else:
+                        return "Failed Verification: Insufficient number of ratings."
+                else:
+                    return "Failed Verification: Insufficient overall rating."
+            else:
+                return "Failed Verification: Insufficient number of shoes sold."
         except Exception as e:
             print("Error while posting application:", e)
 
@@ -275,7 +309,7 @@ def update_verification(shop_id: int, status: bool):
             ).scalar()
             
             if id is None:
-                raise Exception("Invalid shop id.")
+                raise Exception("Invalid shop id for updating verification.")
             
             return id
         except Exception as e:
@@ -299,7 +333,7 @@ def verification_status(shop_id: int):
                 }]
             ).scalar()
             if status is None:
-                raise Exception("Invalid shop id.")
+                raise Exception("Invalid shop id for retrieving verifcation status.")
             return status
         except Exception as e:
             print("Error while retrieving verification status:", e)
@@ -327,7 +361,7 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
                     }]
                 ).first()
             if saleInfo is None:
-                    raise Exception("Invalid shop id.")
+                    raise Exception("Invalid shop id for starting flash sale.")
 
             # retrieve amount discounted
             discountInfo = connection.execute(sqlalchemy.text(

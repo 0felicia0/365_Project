@@ -197,6 +197,167 @@ def create_listings(num_shops, num_listings):
                 [{"shop_id": shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": quantity}]
             )
 
+def create_ratings(num_ratings):
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+    print("Creating fake ratings...")
+    with engine.begin() as connection:
+        fake = Faker()
+        for i in range(num_ratings):
+            shop_id = fake.random_int(1, 10000)
+            user_id = fake.random_int(1, num_users)
+            rating = fake.random_int(2, 5)
+            submit_review(user_id, shop_id, rating)
+
+def post_applications(num_shops):
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+    print("Posting application...")
+    with engine.begin() as connection:
+        for i in range(num_shops):
+            res = post_application(i)
+            if res.isdigit():
+                update_verification(i, True)
+        
+def update_verification(shop_id: int, status: bool):
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+
+    with engine.begin() as connection:
+        try:
+            id = connection.execute(
+                sqlalchemy.text(
+                    """
+                        UPDATE shops
+                        SET verified = :status
+                        WHERE shop_id = :shop_id
+                        RETURNING shop_id
+                    """
+                ),
+                [{
+                    "status": status,
+                    "shop_id": shop_id
+                }]
+            ).scalar()
+            
+            if id is None:
+                raise Exception("Invalid shop id for updating verification.")
+            
+            return id
+        except Exception as e:
+            print("Error while updating verification status:", e)
+            
+            
+def post_application(shop_id: int):
+    # arbitrary number
+    sellingBP = 5
+    ratingBP = 3
+    numRatingBP = 5
+    
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+
+    with engine.begin() as connection:
+        try:
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for posting application.")
+            #  
+            score = connection.execute(sqlalchemy.text(
+                """
+                    SELECT AVG(rating) as avgRating, COUNT(*) as numRatings
+                    FROM shop_rating_ledger
+                    WHERE shop_id = :shop_id
+                    GROUP BY shop_id
+                """
+            ), [{
+                "shop_id": shop_id
+            }]).first()
+            
+            timesSold = connection.execute(
+                sqlalchemy.text(
+                    """
+                        SELECT COUNT(*) AS sold, shop_id
+                        FROM shoe_inventory_ledger
+                        WHERE quantity < 0 AND shop_id = :shop_id
+                        GROUP BY shop_id
+                    """
+                ),
+                [{"shop_id": shop_id}]
+            ).first()
+            
+            if timesSold.sold >= sellingBP:
+                if score.avgRating >= ratingBP:
+                    if score.numRatings >= numRatingBP:
+                        return timesSold.shop_id
+                    else:
+                        return "Failed Verification: Insufficient number of ratings."
+                else:
+                    return "Failed Verification: Insufficient overall rating."
+            else:
+                return "Failed Verification: Insufficient number of shoes sold."
+        except Exception as e:
+            print("Error while posting application:", e)
+            
+        
+def submit_review(user_id: int, shop_id: int, rating: int):
+    try:
+        engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+
+        with engine.begin() as connection:
+        # check valid user
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT user_id
+                                                    FROM users
+                                                    WHERE user_id = :user_id
+                                                    """)
+                                                    , {"user_id": user_id}).first()
+            if result is None:
+                raise Exception("Invalid user for submitting review.")
+        # check valid shop
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for submitting review.")
+        # check valid rating
+            if rating < 1 or rating > 5:
+                raise Exception("Invalid rating value.")
+            
+        # # check that user bought from the certain shop
+        #     records = connection.execute(sqlalchemy.text("""
+        #                                             SELECT carts.user_id, shop_inventory_ledger.shop_id
+        #                                             FROM cart_items
+        #                                             LEFT JOIN carts on carts.cart_id = cart_items.id
+        #                                             LEFT JOIN listings on listings.listing_id = cart_items.listing_id
+        #                                             LEFT JOIN shop_inventory_ledger on shop_inventory_ledger.shop_id = listings.shop_id
+        #                                             WHERE carts.user_id = :user_id AND shop_inventory_ledger.shop_id = :shop_id
+        #                                             """),
+        #                                  [{
+        #                                      "user_id": user_id,
+        #                                      "shop_id": shop_id
+        #                                  }])
+        #     if records is None:
+                
+        # post review
+            connection.execute(sqlalchemy.text("""
+                            INSERT INTO shop_rating_ledger (shop_id, user_id, rating)
+                            VALUES (:shop_id, :user_id, :rating)
+                               """), [{
+                                   "shop_id": shop_id,
+                                   "user_id": user_id,
+                                   "rating": rating
+                               }])
+            
+            return ("Submitted rating of %d for shop id %d." % (rating, shop_id))
+        
+    except Exception as e:
+        print("Error in the process of submitting review: ", e)
+        
 
 def create_cart(user_id):
    
@@ -550,6 +711,24 @@ with engine.begin() as conn:
         constraint shoe_inventory_ledger_shop_id_fkey foreign key (shop_id) references shops (shop_id),
         constraint shoe_inventory_ledger_transaction_id_fkey foreign key (transaction_id) references transactions (id)
     ) tablespace pg_default;
+    
+    create table
+    public.shop_rating_ledger (
+    rating_id bigint generated by default as identity,
+    created_at timestamp with time zone not null default now(),
+    shop_id bigint not null,
+    rating smallint not null,
+    user_id bigint not null,
+    constraint shop_rating_ledger_pkey primary key (rating_id),
+    constraint shop_rating_ledger_shop_id_fkey foreign key (shop_id) references shops (shop_id),
+    constraint shop_rating_ledger_user_id_fkey foreign key (user_id) references users (user_id),
+    constraint shop_rating_ledger_rating_check check (
+      (
+        (1 <= rating)
+        and (rating <= 5)
+      )
+    )
+  ) tablespace pg_default;
 
     create table
     public.shop_balance_ledger (
@@ -559,7 +738,9 @@ with engine.begin() as conn:
         shop_id bigint not null,
         constraint shop_balance_ledger_pkey primary key (id),
         constraint shop_balance_ledger_shop_id_fkey foreign key (shop_id) references shops (shop_id)
-    ) tablespace pg_default;                                                                                      
+    ) tablespace pg_default;    
+
+                                                                                      
 
     create table
     public.carts (
@@ -585,9 +766,12 @@ num_users = 200000
 num_shops = 100000
 num_listings = 200000
 num_checkouts = 5000
+num_ratings = 100000
 
 create_users(num_users)
 create_shops(num_shops)
 create_listings(num_shops, num_listings)
 create_checkouts(num_checkouts, num_listings)
+create_ratings(num_ratings)
+post_applications(10000)
 
