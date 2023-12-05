@@ -251,7 +251,7 @@ This endpoint allows first time users (regardless of if they are a seller/buyer)
 }
 ```
 
-### 3.6. Retrieve Account - `/{user_id}/get_account` (GET)
+### 3.6 Retrieve Account - `/{user_id}/get_account` (GET)
 
 Retrieves name and emial associated with user_id
 **Request**:
@@ -271,7 +271,7 @@ Retrieves name and emial associated with user_id
 }
 ```
 
-### 3.7. Change Password - `/change_password` (PUT)
+### 3.7 Change Password - `/change_password` (PUT)
 
 Changes password with valid inputs
 
@@ -293,7 +293,7 @@ Changes password with valid inputs
 }
 ```
 
-### 3.7. Change Email - `/change_email` (PUT)
+### 3.8. Change Email - `/change_email` (PUT)
 
 Changes email with valid inputs
 
@@ -315,7 +315,7 @@ Changes email with valid inputs
 }
 ```
 
-### 3.8 Start Flash Sale - `/start_flash_sale` (POST)
+### 3.9 Start Flash Sale - `/start_flash_sale` (POST)
 
 Starts a flash sale for a particular shop
 ```json
@@ -330,5 +330,23 @@ Starts a flash sale for a particular shop
 ```json
 {
     "success_msg": "text"
+}
+```
+
+### 3.10 Submit Rating - `/submit_rating` (POST)
+
+Submits a rating for a particular shop.
+```json
+{
+    "user_id": int,
+    "shop_id": int,
+    "rating": int
+}
+```
+
+**Returns**:
+```json
+{
+    "success_mgs": text
 }
 ```

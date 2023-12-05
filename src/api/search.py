@@ -158,7 +158,7 @@ def filter(
                 if i>=page_range_lower and i<page_range_upper:
                     result_item = {
                         "listing_id": row.listing_id,
-                        "price": row.price,
+                        "price": row.price / 100,
                         "brand": row.brand,
                         "gender": row.gender,
                         "size": row.size,
@@ -224,7 +224,7 @@ def compare(listing1: int, listing2:int):
             ans = []
             ans.append({
                             "listing_id": listing1_info.listing_id,
-                            "price": listing1_info.price,
+                            "price": listing1_info.price / 100,
                             "brand": listing1_info.brand,
                             "gender": listing1_info.gender,
                             "size": listing1_info.size,
@@ -237,7 +237,7 @@ def compare(listing1: int, listing2:int):
                         })
             ans.append({
                             "listing_id": listing2_info.listing_id,
-                            "price": listing2_info.price,
+                            "price": listing2_info.price / 100,
                             "brand": listing2_info.brand,
                             "gender": listing2_info.gender,
                             "size": listing2_info.size,

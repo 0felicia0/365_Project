@@ -201,7 +201,7 @@ def create_listing(shoe: Shoe, listing: Listing):
                     RETURNING listing_id
                     """    
                 ),
-                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": listing.price, "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
+                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": listing.price * 100, "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
             )
             listing_id = listing_id.fetchone()[0]
             
@@ -231,7 +231,7 @@ def create_listing(shoe: Shoe, listing: Listing):
 def post_application(shop_id: int):
     # arbitrary number
     sellingBP = 5
-    ratingBP = 4
+    ratingBP = 3
     numRatingBP = 5
     
     with db.engine.begin() as connection:
