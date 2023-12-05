@@ -160,7 +160,7 @@ def submit_review(user_id: int, shop_id: int, rating: int):
                                                     """)
                                                     , {"user_id": user_id}).first()
             if result is None:
-                raise Exception("Invalid user for submitting review.")
+                raise Exception("User does not exist. Try with a valid user to post a review.")
         # check valid shop
             result = connection.execute(sqlalchemy.text("""
                                                     SELECT shop_id
@@ -169,10 +169,10 @@ def submit_review(user_id: int, shop_id: int, rating: int):
                                                     """)
                                                     , {"shop_id": shop_id}).first()
             if result is None:
-                raise Exception("Invalid shop for submitting review.")
+                raise Exception("Shop does not exist to post a rating. Try again with a valid shop.")
         # check valid rating
             if rating < 1 or rating > 5:
-                raise Exception("Invalid rating value.")
+                raise Exception("Invalid rating value. Must be an integer 1 through 5")
             
         # # check that user bought from the certain shop
         #     records = connection.execute(sqlalchemy.text("""
@@ -202,4 +202,4 @@ def submit_review(user_id: int, shop_id: int, rating: int):
             return ("Submitted rating of %d for shop id %d." % (rating, shop_id))
         
     except Exception as e:
-        print("Error in the process of submitting review: ", e)
+        return {f"Error in posting a review: {e}"}
