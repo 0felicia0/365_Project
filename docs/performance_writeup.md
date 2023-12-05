@@ -1,7 +1,9 @@
-1. Fake Data Modeling
+#Performance Writeup
+
+##1. Fake Data Modeling
 Link to file used to construct the rows of data: https://github.com/0felicia0/Shoetopia/blob/main/src/populate.py 
 
-2. Performance results of hitting endpoints
+##2. Performance results of hitting endpoints
 (in ms)
 create_shop - 15, 11, 8
 purchase_promotion_tier - 13, 14, 13
@@ -30,6 +32,6 @@ From this, we concluded that our slowest endpoints were:
 - checkout
 - filter
 
-3. Performance tuning
+##3. Performance tuning
 
 
