@@ -273,8 +273,8 @@ def post_application(shop_id: int):
                 sold = 0
                 id = 0
             else:
-                sold = timesSold.sold
-                id = timesSold.shop_id
+                sold = timesSold[0]
+                id = timesSold[1]
             if sold >= sellingBP:
                 if avgRating >= ratingBP:
                     if numRatings >= numRatingBP:
