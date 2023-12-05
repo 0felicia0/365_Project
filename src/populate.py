@@ -212,12 +212,16 @@ def post_applications(num_shops):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
     print("Posting application...")
     with engine.begin() as connection:
-        for i in range(num_shops):
-            res = post_application(i)
-            if res is None:
+        for i in range(1, num_shops):
+            try:
+                print(i)
+                res = post_application(i)
+                if res is None:
+                    continue
+                if res.isdigit():
+                    update_verification(i, True)
+            except Exception:
                 continue
-            if res.isdigit():
-                update_verification(i, True)
         
 def update_verification(shop_id: int, status: bool):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
@@ -252,8 +256,9 @@ def post_application(shop_id: int):
     sellingBP = 5
     ratingBP = 3
     numRatingBP = 5
-    
-    with db.engine.begin() as connection:
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+
+    with engine.begin() as connection:
         try:
             result = connection.execute(sqlalchemy.text("""
                                                     SELECT shop_id
@@ -292,12 +297,12 @@ def post_application(shop_id: int):
                 sold = 0
                 id = 0
             else:
-                sold = timesSold.sold
-                id = timesSold.shop_id
+                sold = timesSold[0]
+                id = timesSold[1]
             if sold >= sellingBP:
                 if avgRating >= ratingBP:
                     if numRatings >= numRatingBP:
-                        return id
+                        return str(id)
                     else:
                         return "Failed Verification: Insufficient number of ratings."
                 else:
