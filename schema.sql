@@ -5,7 +5,9 @@ create table
     listing_id bigint not null,
     cart_id bigint not null,
     quantity integer not null,
-    constraint cart_items_pkey primary key (id)
+    constraint cart_items_pkey primary key (id),
+    constraint cart_items_cart_id_fkey foreign key (cart_id) references carts (cart_id),
+    constraint cart_items_listing_id_fkey foreign key (listing_id) references listings (listing_id)
   ) tablespace pg_default;
 
 create table
@@ -97,10 +99,17 @@ create table
     user_id bigint not null,
     store_name text not null,
     created_at timestamp with time zone not null default now(),
-    verified boolean null default false,
+    verified boolean not null default false,
+    discount_counter integer not null default 0,
+    sale_start timestamp with time zone not null default now(),
+    price_percentage integer not null default 100,
+    promotion_tier integer not null default 0,
     constraint shops_pkey primary key (shop_id),
     constraint shops_seller_id_key unique (user_id),
-    constraint shops_shop_id_key unique (shop_id)
+    constraint shops_shop_id_key unique (shop_id),
+    constraint shops_store_name_key unique (store_name),
+    constraint shops_user_id_fkey foreign key (user_id) references users (user_id),
+    constraint shops_price_percentage_check check ((price_percentage <= 100))
   ) tablespace pg_default;
 
 create table
@@ -120,8 +129,7 @@ create table
     password text not null,
     created_at timestamp with time zone not null default now(),
     constraint users_pkey primary key (user_id),
-    constraint users_email_key unique (email),
-    constraint users_password_key unique (password)
+    constraint users_email_key unique (email)
   ) tablespace pg_default;
 
 -- insert statements for initial population
