@@ -267,11 +267,16 @@ def post_application(shop_id: int):
                 ),
                 [{"shop_id": shop_id}]
             ).first()
-            
-            if timesSold.sold >= sellingBP:
+            if timesSold is None:
+                sold = 0
+                id = 0
+            else:
+                sold = timesSold.sold
+                id = timesSold.shop_id
+            if sold >= sellingBP:
                 if score.avgRating >= ratingBP:
                     if score.numRatings >= numRatingBP:
-                        return timesSold.shop_id
+                        return id
                     else:
                         return "Failed Verification: Insufficient number of ratings."
                 else:
