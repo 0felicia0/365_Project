@@ -19,6 +19,7 @@ class NewShop(BaseModel):
 
 @router.post("/create_shop")
 def  create_shop(account_id: int, new_shop: NewShop):
+    new_shop.store_name = new_shop.store_name.lower()
     try: 
         with db.engine.begin() as connection:
             # check if account exists

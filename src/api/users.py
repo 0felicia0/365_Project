@@ -23,7 +23,7 @@ def create_account(new_account: NewAccount):
     #       else, create the account
     #       potential upgrade -> restrict password in a certain way (maybe)
     #       try on conflict to minimize code
-
+    new_account.email = new_account.email.lower()
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -80,6 +80,7 @@ def get_account(user_id: int):
 def change_password(email: str, password: str, new_password: str):
     # plan: take in email and password to ensure it is the right user
     #       replace the password
+    email = email.lower()
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -115,6 +116,8 @@ def change_password(email: str, password: str, new_password: str):
 def change_email(email: str, password: str, new_email: str):
     # plan: take in email and password to ensure it is the right user
     #       replace the password
+    email = email.lower()
+    new_email = email.lower()
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
