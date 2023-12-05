@@ -118,28 +118,28 @@ def purchase_promotion_tier(shop_id: int, requested_tier: PromotionTiers, paymen
         return {f"Error in purchasing a promotion tier: {e}"}
 
 class colors(str, Enum):
-    Black = "Black"
-    Grey = "Grey"
-    White = "White"
-    Ivory = "Ivory"
-    Beige = "Beige"
-    Brown = "Brown"
-    Metallic = "Metallic"
-    Purple = "Purple"
-    Blue = "Blue"
-    Green = "Green"
-    Yellow = "Yellow"
-    Orange = "Orange"
-    Pink = "Pink"
-    Red = "Red"
-    Burgundy = "Burgundy"
-    Other = "Other"
+    black = "black"
+    grey = "grey"
+    white = "white"
+    ivory = "ivory"
+    beige = "beige"
+    brown = "brown"
+    metallic = "metallic"
+    purple = "purple"
+    blue = "blue"
+    green = "green"
+    yellow = "yellow"
+    orange = "orange"
+    pink = "pink"
+    red = "red"
+    burgundy = "burgundy"
+    other = "other"
 
 class genders(str, Enum):
-    Youth = "Youth"
-    Women = "Women"
-    Men = "Men"
-    Unisex = "Unisex"
+    youth = "youth"
+    women = "women"
+    men = "men"
+    unisex = "unisex"
 
 class condition(str, Enum):
     new = "new"
@@ -161,6 +161,8 @@ class Listing(BaseModel):
 @router.post("/create_listing")
 def create_listing(shoe: Shoe, listing: Listing):
     try:
+        shoe.brand = shoe.brand.lower()
+        shoe.style = shoe.style.lower()
         with db.engine.begin() as connection:
         #with db.engine.connect().execution_options(isolation_level="Serializable") as connection:
             #create a new transaction
