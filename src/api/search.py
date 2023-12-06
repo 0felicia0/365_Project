@@ -226,7 +226,7 @@ def compare(listing1: int, listing2:int):
             ans = []
             ans.append({
                             "listing_id": listing1_info.listing_id,
-                            "price": listing1_info.price / 100,
+                            "price": round(listing1_info.price / 100, 2),
                             "brand": listing1_info.brand,
                             "gender": listing1_info.gender,
                             "size": listing1_info.size,
@@ -239,7 +239,7 @@ def compare(listing1: int, listing2:int):
                         })
             ans.append({
                             "listing_id": listing2_info.listing_id,
-                            "price": listing2_info.price / 100,
+                            "price": round(listing2_info.price / 100, 2),
                             "brand": listing2_info.brand,
                             "gender": listing2_info.gender,
                             "size": listing2_info.size,

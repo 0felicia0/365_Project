@@ -158,7 +158,7 @@ class Shoe(BaseModel):
 class Listing(BaseModel):
     shop_id: int
     quantity: int
-    price:int
+    price:float
     size:int
     condition: condition
     gender: genders
@@ -176,7 +176,9 @@ def create_listing(shoe: Shoe, listing: Listing):
         if listing.quantity<=0:
             raise Exception("Invalid quantity for listing. Quantity must be greater than 0.")
         if listing.price<=0:
-            raise Exception("Invlaid price for listing. Price must be greater than 0")
+            raise Exception("Invalid price for listing. Price must be greater than 0")
+        if round(listing.price, 2) < listing.price:
+            raise Exception("Invalid price for listing. Price must be limited to two decimal places.")
         if listing.size<=0:
             raise Exception("Invalid size for listing. Sizes cannot be zero or negative. For proper functionality we recommend using US sizing") 
     
@@ -230,7 +232,7 @@ def create_listing(shoe: Shoe, listing: Listing):
                     RETURNING listing_id
                     """    
                 ),
-                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": listing.price * 100, "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
+                [{"shop_id": listing.shop_id, "shoe_id": shoe_id, "price": int(round(listing.price, 2) * 100), "size": listing.size, "transaction_id": transaction_id, "gender": listing.gender, "condition" : listing.condition}]
             )
             listing_id = listing_id.fetchone()[0]
             
@@ -245,7 +247,7 @@ def create_listing(shoe: Shoe, listing: Listing):
                 [{"shop_id": listing.shop_id, "listing_id": listing_id, "transaction_id": transaction_id, "quantity": listing.quantity}]
             )
             
-            return "successfully created listing"
+            return "Successfully created listing"
     
     except HTTPError as h:
         return h.msg
@@ -287,7 +289,7 @@ def post_application(shop_id: int):
             }]).first()
 
             if score is None:
-                raise Exception("No available ratings. Shop not elligible for verification.")
+                raise Exception("No available ratings. Shop not eligible for verification.")
 
             avgRating = score[0]
             numRatings = score[1]
@@ -313,7 +315,7 @@ def post_application(shop_id: int):
             if sold >= sellingBP:
                 if avgRating >= ratingBP:
                     if numRatings >= numRatingBP:
-                        return {"Shop elligble for verification:", id}
+                        return {"Shop eligible for verification:", id}
                     else:
                         return "Failed Verification: Insufficient number of ratings."
                 else:
@@ -381,10 +383,16 @@ def verification_status(shop_id: int):
 # Flash Sale EPs
 
 @router.post("/start_flash_sale")
-def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
+def start_flash_sale(shop_id: int, discount_counter: int, price_percentage: int):
     
     try:
         with db.engine.begin() as connection:
+            # ensure valid price percentage
+            if discount_counter <= 0:
+                raise Exception("Invalid discount counter. Set a positive number of discounts.")
+            if price_percentage < 0 or price_percentage > 100:
+                raise Exception("Invalid price percentage. Set a percentage between 0% and 100%.")
+            # ensure valid discount counter
             # check if sale is currently ongoing
             # retrieve sale_start
             saleInfo = connection.execute(sqlalchemy.text(
@@ -411,7 +419,7 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
                             SUM(quantity) as amtDiscounted, shop_id
                         FROM shoe_inventory_ledger
                         WHERE shop_id = :shop_id AND quantity < 0
-                        AND (EXTRACT(epoch FROM created_at)::int - :startTime) > 0
+                        AND (EXTRACT(epoch FROM created_at)::int - :startTime) < 0
                         GROUP BY shop_id
                     """
                 ),
@@ -427,7 +435,7 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
             
             # sale is still active, can't start new sale.
             if amtDiscounted < saleInfo.discount_counter:    
-                return "Sale for shop %d is still active for %d more shoe(s) at %d%% price." % (shop_id, (saleInfo.discount_counter - amtDiscounted), pricePercentage)
+                return "Sale for shop %d is still active for %d more shoe(s) at %d%% price." % (shop_id, (saleInfo.discount_counter - amtDiscounted), saleInfo.price_percentage)
             
             # update discounter_counter in shops to disCounter
             else:
@@ -443,12 +451,12 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
                         """
                     ),
                     [{
-                        "disCounter": disCounter,
-                        "pricePercentage": pricePercentage,
+                        "disCounter": discount_counter,
+                        "pricePercentage": price_percentage,
                         "shop_id": shop_id,
                         "startTime": datetime.now().astimezone()
                     }]
                 )
-                return "Sale started for shop %d for %d shoe(s) at %d%% price." % (shop_id, disCounter, pricePercentage)
+                return "Sale started for shop %d for %d shoe(s) at %d%% price." % (shop_id, discount_counter, price_percentage)
     except Exception as e:
             return {f"Error in start flash sale: {e}"}
