@@ -21,6 +21,8 @@ class NewShop(BaseModel):
 def create_shop(account_id: int, new_shop: NewShop):
     new_shop.store_name = new_shop.store_name.lower()
     try: 
+        if new_shop.store_name == "":
+            raise Exception("Store name cannot be an empty string. Try again.")
         with db.engine.begin() as connection:
             # check if account exists
             account = connection.execute(sqlalchemy.text("""
@@ -89,6 +91,8 @@ def purchase_promotion_tier(shop_id: int, requested_tier: PromotionTiers, paymen
     
     try: 
         # check if payment is valid
+        if payment.name == "" or payment.credit_card == "" or payment.exp_date == "" or payment.security_code <= 0:
+            raise Exception("Invalid payment information. Try again with valid credentials.")
 
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -305,10 +309,11 @@ def post_application(shop_id: int):
             else:
                 sold = timesSold[0]
                 id = timesSold[1]
+
             if sold >= sellingBP:
                 if avgRating >= ratingBP:
                     if numRatings >= numRatingBP:
-                        return id
+                        return {"Shop elligble for verification:", id}
                     else:
                         return "Failed Verification: Insufficient number of ratings."
                 else:
@@ -342,7 +347,7 @@ def update_verification(shop_id: int, status: bool):
             if id is None:
                 raise Exception("Invalid shop id for updating verification.")
             
-            return id
+            return {"Shop verfication status successfully added:", id}
     except Exception as e:
            return {f"Error in update verification: {e}"}
 
@@ -366,7 +371,10 @@ def verification_status(shop_id: int):
             ).scalar()
             if status is None:
                 raise Exception("Invalid shop id for retrieving verifcation status.")
-            return status
+            if status == True:
+                return {"This shop is verified."}
+            else:
+                return {"This shop is not verified."} 
     except Exception as e:
             return {f"Error in verification status: {e}"}
             
