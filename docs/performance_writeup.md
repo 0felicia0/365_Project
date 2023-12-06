@@ -30,3 +30,35 @@ Endpoint Performance (in ms):
 - filter
 
 ## 3. Performance tuning
+
+**1. Post Application**
+**Query #1:**
+(screenshot)
+
+- Explanation of Query Plan 
+    - The query aggregates the shop_rating_ledger by shop_id, then scans through the grouped rows to find the appropriate shop_id. An index on the shop_id in the shop_rating_ledger used in the where and group by statements should improve performance (by).
+
+- Index to Add
+    - CREATE INDEX ON shop_rating_ledger(shop_id)
+
+**Indexed Query Plan**
+(screenshot)
+
+**Explanation of Indexed Query Plan**
+The query aggregates the shop_rating_ledger by shop_id, then scans through the bitmap of indexes to find the appropriate shop_id.
+
+**Expected Performance Boost:** YES
+
+**Query #2:**
+- QUERY PLAN SCREENSHOT
+- EXPLANATION OF QUERY PLAN
+	- The query aggregates the shoe_inventory_ledger by shop_id, then scans through the shoe_inventory_ledger to find the rows with the given shop_id that involve reducing the quantity of shoes. Adding an composite index on the quantity and shop_id for rows in the shoe_inventory_ledger should boost performance. 
+- INDEX TO ADD
+	- CREATE INDEX ON shoe_inventory_ledger(quantity, shop_id);
+- INDEXED QUERY PLAN SCREENSHOT
+- EXPLANATION OF QUERY PLAN
+	- The query aggregates the shoe_inventory_ledger by shop_id, then performs an index-only scan on the shoe_inventory_ledger to filter through the composite indexes by quantity and shop_id.
+- EXPECTED PERFORMANCE BOOST: YES
+
+
+
