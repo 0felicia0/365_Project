@@ -146,7 +146,9 @@ class Payment(BaseModel):
 def checkout(cart_id: int, payment: Payment):
 
  # have to update ledgers, create transaction,
-    try:    
+    try:
+        if payment.name == "" or payment.credit_card == "" or payment.exp_date == "" or payment.security_code <= 0:
+            raise Exception("Invalid payment information. Create a new cart and try again.")
         with db.engine.begin() as connection:
             res = connection.execute(sqlalchemy.text("""
                                                      SELECT carts.active 
@@ -175,6 +177,9 @@ def checkout(cart_id: int, payment: Payment):
                     listings ON cart_items.listing_id = listings.listing_id
                 WHERE
                     cart_items.cart_id = :cart_id"""), {"cart_id": cart_id}).fetchall()
+
+            if len(cart_items_info) == 0:
+                raise Exception("No items in the cart for checkout. Create a new cart and add items to the cart before checking out again.")
 
             for row in cart_items_info:
                 quantity, listing_id, shop_id, price = row
@@ -270,8 +275,9 @@ def checkout(cart_id: int, payment: Payment):
             return h.msg
                     
     except Exception as e:
+        with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("""
                 UPDATE carts
                 SET active = :active
                 WHERE cart_id = :cart_id"""), {"active": False, "cart_id": cart_id})
-            return {"Error during checkout{e}", e}
+            return {f"Error during checkout: {e}"}

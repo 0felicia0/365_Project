@@ -25,6 +25,8 @@ def create_account(new_account: NewAccount):
     #       try on conflict to minimize code
     new_account.email = new_account.email.lower()
     try:
+        if new_account.name == "" or new_account.email == "" or new_account.password == "":
+            raise Exception("Invalid account credentials. Name, email, and password cannot be empty strings.")
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
                 INSERT INTO users (name, email, password)
@@ -48,7 +50,7 @@ def create_account(new_account: NewAccount):
         return h.msg
 
     except Exception as e:
-         print("Error in the process of creating account: ", e)
+         return {f"Error in creating an account: {e}"}
 
 
 @router.get("/{user_id}/get_account")
@@ -73,7 +75,7 @@ def get_account(user_id: int):
         return h.msg
 
     except Exception as e:
-         print("Error in the process of getting account: ", e)
+        return {f"Error in getting account: {e}"}
 
 
 @router.put("/change_password")
@@ -109,7 +111,7 @@ def change_password(email: str, password: str, new_password: str):
         return h.msg
 
     except Exception as e:
-        print("Error in the process of changing password: ", e)
+        return {f"Error in changing password: {e}"}
 
 
 @router.put("/change_email")
@@ -146,7 +148,7 @@ def change_email(email: str, password: str, new_email: str):
         return h.msg
 
     except Exception as e:
-         print("Error in the process of changing password: ", e)
+         return {f"Error in changing email: {e}"}
          
 @router.post("/submit_review")
 def submit_review(user_id: int, shop_id: int, rating: int):

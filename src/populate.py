@@ -475,6 +475,7 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
    
     except Exception as e:
         print("Error in the process of adding an item to a cart: ", e)
+        
 def checkout(cart_id: int):
     print("creating fake checkouts...")
  # have to update ledgers, create transaction,
@@ -774,16 +775,16 @@ with engine.begin() as conn:
         constraint cart_items_pkey primary key (id)
     ) tablespace pg_default;
   """))                            
-num_users = 200000
-num_shops = 100000
-num_listings = 200000
-num_checkouts = 5000
-num_ratings = 100000
+num_users = 200
+num_shops = 10
+num_listings = 1000
+num_checkouts = 0
+num_ratings = 0
 
 create_users(num_users)
 create_shops(num_shops)
 create_listings(num_shops, num_listings)
-create_checkouts(num_checkouts, num_listings)
-create_ratings(num_ratings)
-post_applications(10000)
+# create_checkouts(num_checkouts, num_listings)
+# create_ratings(num_ratings)
+# post_applications(10000)
 
