@@ -194,7 +194,7 @@ def create_listing(shoe: Shoe, listing: Listing):
                                                     """)
                                                     , {"shop_id": listing.shop_id}).first()
             if result is None:
-                raise Exception("Invalid shop for posting application.")
+                raise Exception("Invalid shop for creating listing.")
             
             description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
             
@@ -419,7 +419,7 @@ def start_flash_sale(shop_id: int, discount_counter: int, price_percentage: int)
                             SUM(quantity) as amtDiscounted, shop_id
                         FROM shoe_inventory_ledger
                         WHERE shop_id = :shop_id AND quantity < 0
-                        AND (EXTRACT(epoch FROM created_at)::int - :startTime) < 0
+                        AND (EXTRACT(epoch FROM created_at)::int - :startTime) > 0
                         GROUP BY shop_id
                     """
                 ),
