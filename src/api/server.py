@@ -22,11 +22,11 @@ app = FastAPI(
         "name1": "Felicia Patel",
         "email1": "frpatel@calpoly.edu",
         "name2": "Hallie Christopherson",
-        "email2": "email",
+        "email2": "halliec6@gmail.com",
         "name3": "Xander Specht",
-        "email3": "email",
+        "email3": "afspecht@calpoly.edu",
         "name4": "Mio Nakagawa",
-        "email4": "email",
+        "email4": "manakaga@calpoly.edu",
     },
 )
 

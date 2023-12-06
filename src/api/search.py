@@ -177,7 +177,7 @@ def filter(
         return h.msg
 
     except Exception as e:
-        print("Error in search: ", e)
+       return {f"Error in search: {e}"}
 
     if ans == [] and search_page==1:
         return "no results, please modify your search"
@@ -255,4 +255,4 @@ def compare(listing1: int, listing2:int):
         return h.msg
 
     except Exception as e:
-        print("Error creating listing: ", e)
+        return {f"Error in comparing listings: {e}"}

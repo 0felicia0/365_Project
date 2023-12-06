@@ -23,8 +23,10 @@ def create_account(new_account: NewAccount):
     #       else, create the account
     #       potential upgrade -> restrict password in a certain way (maybe)
     #       try on conflict to minimize code
-
+    new_account.email = new_account.email.lower()
     try:
+        if new_account.name == "" or new_account.email == "" or new_account.password == "":
+            raise Exception("Invalid account credentials. Name, email, and password cannot be empty strings.")
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
                 INSERT INTO users (name, email, password)
@@ -48,7 +50,7 @@ def create_account(new_account: NewAccount):
         return h.msg
 
     except Exception as e:
-         print("Error in the process of creating account: ", e)
+         return {f"Error in creating an account: {e}"}
 
 
 @router.get("/{user_id}/get_account")
@@ -73,13 +75,14 @@ def get_account(user_id: int):
         return h.msg
 
     except Exception as e:
-         print("Error in the process of getting account: ", e)
+        return {f"Error in getting account: {e}"}
 
 
 @router.put("/change_password")
 def change_password(email: str, password: str, new_password: str):
     # plan: take in email and password to ensure it is the right user
     #       replace the password
+    email = email.lower()
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -108,13 +111,15 @@ def change_password(email: str, password: str, new_password: str):
         return h.msg
 
     except Exception as e:
-        print("Error in the process of changing password: ", e)
+        return {f"Error in changing password: {e}"}
 
 
 @router.put("/change_email")
 def change_email(email: str, password: str, new_email: str):
     # plan: take in email and password to ensure it is the right user
     #       replace the password
+    email = email.lower()
+    new_email = email.lower()
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -143,7 +148,7 @@ def change_email(email: str, password: str, new_email: str):
         return h.msg
 
     except Exception as e:
-         print("Error in the process of changing password: ", e)
+         return {f"Error in changing email: {e}"}
          
 @router.post("/submit_review")
 def submit_review(user_id: int, shop_id: int, rating: int):
@@ -157,7 +162,7 @@ def submit_review(user_id: int, shop_id: int, rating: int):
                                                     """)
                                                     , {"user_id": user_id}).first()
             if result is None:
-                raise Exception("Invalid user for submitting review.")
+                raise Exception("User does not exist. Try with a valid user to post a review.")
         # check valid shop
             result = connection.execute(sqlalchemy.text("""
                                                     SELECT shop_id
@@ -166,10 +171,10 @@ def submit_review(user_id: int, shop_id: int, rating: int):
                                                     """)
                                                     , {"shop_id": shop_id}).first()
             if result is None:
-                raise Exception("Invalid shop for submitting review.")
+                raise Exception("Shop does not exist to post a rating. Try again with a valid shop.")
         # check valid rating
             if rating < 1 or rating > 5:
-                raise Exception("Invalid rating value.")
+                raise Exception("Invalid rating value. Must be an integer 1 through 5")
             
         # # check that user bought from the certain shop
         #     records = connection.execute(sqlalchemy.text("""
@@ -199,4 +204,4 @@ def submit_review(user_id: int, shop_id: int, rating: int):
             return ("Submitted rating of %d for shop id %d." % (rating, shop_id))
         
     except Exception as e:
-        print("Error in the process of submitting review: ", e)
+        return {f"Error in posting a review: {e}"}

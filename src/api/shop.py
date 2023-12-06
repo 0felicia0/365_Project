@@ -18,8 +18,11 @@ class NewShop(BaseModel):
     store_name: str
 
 @router.post("/create_shop")
-def  create_shop(account_id: int, new_shop: NewShop):
+def create_shop(account_id: int, new_shop: NewShop):
+    new_shop.store_name = new_shop.store_name.lower()
     try: 
+        if new_shop.store_name == "":
+            raise Exception("Store name cannot be an empty string. Try again.")
         with db.engine.begin() as connection:
             # check if account exists
             account = connection.execute(sqlalchemy.text("""
@@ -88,6 +91,8 @@ def purchase_promotion_tier(shop_id: int, requested_tier: PromotionTiers, paymen
     
     try: 
         # check if payment is valid
+        if payment.name == "" or payment.credit_card == "" or payment.exp_date == "" or payment.security_code <= 0:
+            raise Exception("Invalid payment information. Try again with valid credentials.")
 
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
@@ -160,12 +165,34 @@ class Listing(BaseModel):
 
 @router.post("/create_listing")
 def create_listing(shoe: Shoe, listing: Listing):
+    #all of these errors show a 500 error in supabase, prints error message in terminal
+    #we want the error message in supabase
+    
     try:
+        if shoe.brand == "":
+            raise Exception("Invalid brand for shoe. Brand cannot be an empty string. Ensure that the style field is also not an empty string.")
+        if shoe.style == "":
+            raise Exception("Invalid style for shoe. Style cannot be an empty string.")
+        if listing.quantity<=0:
+            raise Exception("Invalid quantity for listing. Quantity must be greater than 0.")
+        if listing.price<=0:
+            raise Exception("Invlaid price for listing. Price must be greater than 0")
+        if listing.size<=0:
+            raise Exception("Invalid size for listing. Sizes cannot be zero or negative. For proper functionality we recommend using US sizing") 
+    
         shoe.brand = shoe.brand.lower()
         shoe.style = shoe.style.lower()
         with db.engine.begin() as connection:
         #with db.engine.connect().execution_options(isolation_level="Serializable") as connection:
             #create a new transaction
+            result = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": listing.shop_id}).first()
+            if result is None:
+                raise Exception("Invalid shop for posting application.")
             
             description = "shoe uploaded: " + shoe.color + ",  " + shoe.brand + ", " + shoe.style
             
@@ -224,7 +251,7 @@ def create_listing(shoe: Shoe, listing: Listing):
         return h.msg
 
     except Exception as e:
-        print("Error creating listing: ", e)
+       return {f"Error in creating a listing: {e}"}
 
 # Verification EPs
 @router.post("/post_application")
@@ -236,8 +263,9 @@ def post_application(shop_id: int):
     ratingBP = 3
     numRatingBP = 5
     
-    with db.engine.begin() as connection:
-        try:
+   
+    try:
+        with db.engine.begin() as connection: 
             result = connection.execute(sqlalchemy.text("""
                                                     SELECT shop_id
                                                     FROM shops
@@ -257,6 +285,10 @@ def post_application(shop_id: int):
             ), [{
                 "shop_id": shop_id
             }]).first()
+
+            if score is None:
+                raise Exception("No available ratings. Shop not elligible for verification.")
+
             avgRating = score[0]
             numRatings = score[1]
             
@@ -277,24 +309,26 @@ def post_application(shop_id: int):
             else:
                 sold = timesSold[0]
                 id = timesSold[1]
+
             if sold >= sellingBP:
                 if avgRating >= ratingBP:
                     if numRatings >= numRatingBP:
-                        return id
+                        return {"Shop elligble for verification:", id}
                     else:
                         return "Failed Verification: Insufficient number of ratings."
                 else:
                     return "Failed Verification: Insufficient overall rating."
             else:
                 return "Failed Verification: Insufficient number of shoes sold."
-        except Exception as e:
-            print("Error while posting application:", e)
+    except Exception as e:
+        return {f"Error in post verification: {e}"}
 
 # Set the status of the given shop_id to Verified (True)
 @router.post("/update_verification")
 def update_verification(shop_id: int, status: bool):
-    with db.engine.begin() as connection:
-        try:
+    
+    try:
+        with db.engine.begin() as connection:
             id = connection.execute(
                 sqlalchemy.text(
                     """
@@ -313,15 +347,16 @@ def update_verification(shop_id: int, status: bool):
             if id is None:
                 raise Exception("Invalid shop id for updating verification.")
             
-            return id
-        except Exception as e:
-            print("Error while updating verification status:", e)
+            return {"Shop verfication status successfully added:", id}
+    except Exception as e:
+           return {f"Error in update verification: {e}"}
 
 # Return verification status for a given shop_id
 @router.get("/verification_status")
 def verification_status(shop_id: int):
-    with db.engine.begin() as connection:
-        try:
+    
+    try:
+        with db.engine.begin() as connection:
             status = connection.execute(
                 sqlalchemy.text(
                     """
@@ -336,16 +371,20 @@ def verification_status(shop_id: int):
             ).scalar()
             if status is None:
                 raise Exception("Invalid shop id for retrieving verifcation status.")
-            return status
-        except Exception as e:
-            print("Error while retrieving verification status:", e)
+            if status == True:
+                return {"This shop is verified."}
+            else:
+                return {"This shop is not verified."} 
+    except Exception as e:
+            return {f"Error in verification status: {e}"}
             
 # Flash Sale EPs
 
 @router.post("/start_flash_sale")
 def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
-    with db.engine.begin() as connection:
-        try:
+    
+    try:
+        with db.engine.begin() as connection:
             # check if sale is currently ongoing
             # retrieve sale_start
             saleInfo = connection.execute(sqlalchemy.text(
@@ -411,5 +450,5 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
                     }]
                 )
                 return "Sale started for shop %d for %d shoe(s) at %d%% price." % (shop_id, disCounter, pricePercentage)
-        except Exception as e:
-            print("Error while starting flash sale: ", e)
+    except Exception as e:
+            return {f"Error in start flash sale: {e}"}
