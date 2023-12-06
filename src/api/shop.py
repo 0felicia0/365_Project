@@ -342,7 +342,7 @@ def verification_status(shop_id: int):
             
 # Flash Sale EPs
 
-@router.get("/start_flash_sale")
+@router.post("/start_flash_sale")
 def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
     with db.engine.begin() as connection:
         try:
@@ -378,13 +378,13 @@ def start_flash_sale(shop_id: int, disCounter: int, pricePercentage: int):
                 ),
                                    [{
                                        "shop_id": shop_id,
-                                       "startTime": saleInfo[1]
+                                       "startTime": saleInfo[2]
                                    }]
-                                   ).scalar()
+                                   ).first()
             if discountInfo is None:
                 amtDiscounted = 0
             else:
-                amtDiscounted = abs(discountInfo.amtDiscounted)
+                amtDiscounted = abs(discountInfo[0])
             
             # sale is still active, can't start new sale.
             if amtDiscounted < saleInfo.discount_counter:    

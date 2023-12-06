@@ -636,6 +636,7 @@ with engine.begin() as conn:
     DROP TABLE IF EXISTS cart_items CASCADE;
     DROP TABLE IF EXISTS shoes CASCADE;                            
     DROP TABLE IF EXISTS listings CASCADE;
+    DROP TABLE IF EXISTS shop_rating_ledger CASCADE;
     DROP TABLE IF EXISTS shoe_inventory_ledger CASCADE;
     DROP TABLE IF EXISTS shops CASCADE;
     DROP TABLE IF EXISTS shop_balance_ledger CASCADE;
@@ -777,8 +778,8 @@ with engine.begin() as conn:
 num_users = 200000
 num_shops = 100000
 num_listings = 200000
-num_checkouts = 5000
-num_ratings = 100000
+num_checkouts = 50000
+num_ratings = 40000
 
 create_users(num_users)
 create_shops(num_shops)
