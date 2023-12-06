@@ -185,6 +185,33 @@ def filter(
         return "no results on this page"
     return ans
 
+@router.get("/view_ratings")
+def view_ratings(shop_id: int):
+    try:
+        with db.engine.begin() as connection:
+            rating_info = connection.execute(
+                sqlalchemy.text(
+                    """
+                    select count(*) as total, sum(rating)/count(*) as avg
+                    FROM shop_rating_ledger 
+                    WHERE shop_id = :shop_id
+                    GROUP BY shop_id 
+                    """
+                ),
+                [{"shop_id": shop_id}]
+            ).fetchone()
+           
+            if rating_info is None:
+                raise ValueError("No reviews for this shop. Please search for a different shop.")
+            if rating_info.total<5:
+                raise ValueError("Not enough reviews for this shop. Please check back later")
+            return{"average rating out of 5": rating_info.avg}
+    except HTTPError as h:
+        return h.msg
+
+    except Exception as e:
+        return {f"Error in comparing listings: {e}"}  
+      
 @router.get("/compare")
 def compare(listing1: int, listing2:int):
     try:
@@ -250,7 +277,7 @@ def compare(listing1: int, listing2:int):
                             "is verified": listing2_info.verified                      
 
                         })
-        return ans
+            return ans
     except HTTPError as h:
         return h.msg
 
