@@ -2,6 +2,24 @@
 
 ## 1. Fake Data Modeling
 Link to the file used to construct the rows of fake data: https://github.com/0felicia0/Shoetopia/blob/main/src/populate.py 
+Rows per table:
+- cart_items: 4575
+- carts: 5007
+- listings: 200003
+- shoe_inventory_ledger: 204588
+- shoes: 16465
+- shop_balance_ledger: 100003
+- shops: 100001
+- transactions: 204577
+- users: 200001
+
+- total rows: 1,009,994
+
+- In creating this distribution we decided that a bulk of our data would be in our transactions table because numerous endpoints require an operation to be logged in the transactions ledger.
+- Our users are also a bulk of our rows (about 20%), and half of our users have a shop correlated with their account.
+- The main builk of our data was in shoes and listings as we expect each shop will have many listings, and the bulk of time will be spent browsing the vast catalog of shoes.
+- We then had a smaller percentage of checkouts because we estimated that out of the pool of users only a small group from that pool would make it through the full checkout process.  Having completed this analysis we agree it would be worth investigating the runtimes when carts were doubled as there could be many active carts at any given time.
+  
 
 ## 2. Performance results of hitting endpoints
 Endpoint Performance (in ms):
