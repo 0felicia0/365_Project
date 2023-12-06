@@ -189,6 +189,17 @@ def filter(
 def view_ratings(shop_id: int):
     try:
         with db.engine.begin() as connection:
+            if shop_id <= 0:
+                raise Exception("Invalid shop id for viewing ratings.")
+            shop_exists = connection.execute(sqlalchemy.text("""
+                                                    SELECT shop_id
+                                                    FROM shops
+                                                    WHERE shop_id = :shop_id
+                                                    """)
+                                                    , {"shop_id": shop_id}).first()
+            if shop_exists is None:
+                raise Exception("Shop does not exist.")
+            
             rating_info = connection.execute(
                 sqlalchemy.text(
                     """
@@ -203,14 +214,13 @@ def view_ratings(shop_id: int):
            
             if rating_info is None:
                 raise ValueError("No reviews for this shop. Please search for a different shop.")
-            if rating_info.total<5:
-                raise ValueError("Not enough reviews for this shop. Please check back later")
-            return{"average rating out of 5": rating_info.avg}
+
+            return{"Average rating out of 5": rating_info.avg, "Total review count": rating_info.total}
     except HTTPError as h:
         return h.msg
 
     except Exception as e:
-        return {f"Error in comparing listings: {e}"}  
+        return {f"Error in view ratings: {e}"}  
       
 @router.get("/compare")
 def compare(listing1: int, listing2:int):

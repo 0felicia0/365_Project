@@ -785,7 +785,7 @@ num_ratings = 40000
 create_users(num_users)
 create_shops(num_shops)
 create_listings(num_shops, num_listings)
-# create_checkouts(num_checkouts, num_listings)
-# create_ratings(num_ratings)
-# post_applications(10000)
+create_checkouts(num_checkouts, num_listings)
+create_ratings(num_ratings)
+post_applications(10000)
 
