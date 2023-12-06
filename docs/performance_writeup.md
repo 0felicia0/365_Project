@@ -40,6 +40,7 @@ Endpoint Performance (in ms):
 - change_email - 15, 12, 14
 - submit_review - 12, 13, 11
 - **filter - 330 (slowest)**
+- view_ratings - 9, 8, 8 
 - compare - 9, 16, 10
 
 **From this, we concluded that our slowest endpoints were:**
