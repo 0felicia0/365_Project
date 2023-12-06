@@ -28,6 +28,15 @@ def create_cart(new_cart: NewCart):
 
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""
+                                                        SELECT user_id
+                                                        FROM users
+                                                        WHERE user_id = :user_id
+                                                        """), 
+                                                        {"user_id": new_cart.user_id}).first()
+            if result is None:
+                raise Exception("Inputed user_id is not valid. Try again with an existing user.")
+
+            result = connection.execute(sqlalchemy.text("""
                                                         SELECT cart_id, user_id, active
                                                         FROM carts
                                                         WHERE active = TRUE AND user_id = :user_id
@@ -35,13 +44,15 @@ def create_cart(new_cart: NewCart):
                                                         {"user_id": new_cart.user_id}).first()
 
             if result is None:
-                print("No active cart with user_id:", new_cart.user_id, "| Creating new cart.")
                 cart_id = connection.execute(sqlalchemy.text("""
                                                             INSERT INTO carts (user_id, active)
                                                             VALUES (:user_id, TRUE)
                                                             RETURNING cart_id;"""), 
                                                             {"user_id": new_cart.user_id}).scalar()
-                return {"cart_id": cart_id}
+
+                print("No active cart with user_id:", new_cart.user_id, "| Creating new cart.")
+
+                return {"Creating new cart - cart_id": cart_id}
             
             raise HTTPError(url=None, code=400, msg="Cart already active with given user_id. Checkout before activating another cart.", hdrs={}, fp=None)
 
@@ -49,7 +60,7 @@ def create_cart(new_cart: NewCart):
         return e.msg
 
     except Exception as e:
-        print("Error in the process of creating a new cart: ", e)
+        return {f"Error in creating a cart: {e}"}
     
     
 
@@ -75,7 +86,7 @@ def get_cart(user_id: int):
         return e.msg
     
     except Exception as e:
-        print("Error in the process of getting an active/existing cart: ", e)
+       return {f"Error in getting a cart: {e}"}
     
 
 @router.post("/{cart_id}/listing/{listing_id}/quantity/{quantity}")
@@ -123,7 +134,7 @@ def set_item_quantity(cart_id: int, listing_id: int, quantity: int):
         return e.msg
     
     except Exception as e:
-        print("Error in the process of adding an item to a cart: ", e)
+        return {f"Error in adding an item to the cart: {e}"}
 
 class Payment(BaseModel):
     name: str
@@ -135,10 +146,8 @@ class Payment(BaseModel):
 def checkout(cart_id: int, payment: Payment):
 
  # have to update ledgers, create transaction,
-
-    with db.engine.begin() as connection:
-
-        try:    
+    try:    
+        with db.engine.begin() as connection:
             res = connection.execute(sqlalchemy.text("""
                                                      SELECT carts.active 
                                                      FROM carts 
@@ -230,7 +239,7 @@ def checkout(cart_id: int, payment: Payment):
                 balance = int(balance)
                 
                 if inventory < quantity:
-                    raise IntegrityError("Not enough stock for listing_id {}".format(listing_id), None, None)
+                    raise Exception("Not enough stock for listing_id")
 
                     #---
                 transaction_id = connection.execute(sqlalchemy.text("""
@@ -257,12 +266,12 @@ def checkout(cart_id: int, payment: Payment):
             
             return {"Cart checkout complete!"}
         
-        except HTTPError as h:
+    except HTTPError as h:
             return h.msg
                     
-        except Exception as e:
+    except Exception as e:
             connection.execute(sqlalchemy.text("""
                 UPDATE carts
                 SET active = :active
                 WHERE cart_id = :cart_id"""), {"active": False, "cart_id": cart_id})
-            return {"Error during checkout{}".format(str(e))}
+            return {"Error during checkout{e}", e}
